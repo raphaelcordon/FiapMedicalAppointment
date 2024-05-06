@@ -42,6 +42,7 @@ public class DoctorService : IDoctorService
         using var transaction = _repository.BeginTransaction();
         try
         {
+            // Create the user
             var user = new User
             {
                 UserName = dto.UserDto.UserName,
@@ -50,21 +51,29 @@ public class DoctorService : IDoctorService
             var createUserResult = await _userManager.CreateAsync(user, dto.UserDto.Password);
             if (!createUserResult.Succeeded)
             {
-                throw new Exception("User creation failed");
+                throw new Exception("User creation failed: " + createUserResult.Errors.FirstOrDefault()?.Description);
             }
 
-            var doctor = _mapper.Map<Doctor>(dto);
-            doctor.UserId = user.Id;
+            // Assign role to the user
+            var addToRoleResult = await _userManager.AddToRoleAsync(user, "Doctor"); // Assuming role is correctly named as "Doctor"
+            if (!addToRoleResult.Succeeded)
+            {
+                throw new Exception("Adding user to role failed: " + addToRoleResult.Errors.FirstOrDefault()?.Description);
+            }
+
+            // Create doctor-specific details
+            var doctor = _mapper.Map<Doctor>(dto); // Assuming dto contains doctor-specific data
+            doctor.Id = user.Id; // Link the Doctor entity with the User ID
             await _repository.AddAsync(doctor);
             await _repository.SaveChangesAsync();
 
             transaction.Commit();
             return _mapper.Map<DoctorResponseDto>(doctor);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             transaction.Rollback();
-            throw;
+            throw new Exception("An error occurred while creating the doctor: " + ex.Message, ex);
         }
     }
 

@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20240506102048_InitialCreate")]
+    [Migration("20240506132505_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -83,40 +83,6 @@ namespace Infrastructure.Migrations
                     b.ToTable("AppointmentSpan", (string)null);
                 });
 
-            modelBuilder.Entity("Domain.Entities.Doctor", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("FirstName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("LastName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("UserId1")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId")
-                        .IsUnique();
-
-                    b.HasIndex("UserId1")
-                        .IsUnique()
-                        .HasFilter("[UserId1] IS NOT NULL");
-
-                    b.ToTable("Doctors", (string)null);
-                });
-
             modelBuilder.Entity("Domain.Entities.MedicalSpecialty", b =>
                 {
                     b.Property<Guid>("Id")
@@ -130,55 +96,6 @@ namespace Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("MedicalSpecialty");
-                });
-
-            modelBuilder.Entity("Domain.Entities.Patient", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Address")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<string>("Cpf")
-                        .IsRequired()
-                        .HasMaxLength(11)
-                        .HasColumnType("nvarchar(11)");
-
-                    b.Property<string>("FirstName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("LastName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("UserId1")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Zip")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId")
-                        .IsUnique();
-
-                    b.HasIndex("UserId1")
-                        .IsUnique()
-                        .HasFilter("[UserId1] IS NOT NULL");
-
-                    b.ToTable("Patients", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.User", b =>
@@ -253,6 +170,8 @@ namespace Infrastructure.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("AspNetUsers", (string)null);
+
+                    b.UseTptMappingStrategy();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", b =>
@@ -388,6 +307,35 @@ namespace Infrastructure.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("Domain.Entities.Doctor", b =>
+                {
+                    b.HasBaseType("Domain.Entities.User");
+
+                    b.ToTable("Doctors", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.Patient", b =>
+                {
+                    b.HasBaseType("Domain.Entities.User");
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("Cpf")
+                        .IsRequired()
+                        .HasMaxLength(11)
+                        .HasColumnType("nvarchar(11)");
+
+                    b.Property<string>("Zip")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.ToTable("Patients", (string)null);
+                });
+
             modelBuilder.Entity("Domain.Entities.Role", b =>
                 {
                     b.HasBaseType("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>");
@@ -435,36 +383,6 @@ namespace Infrastructure.Migrations
                     b.Navigation("Doctor");
 
                     b.Navigation("Patient");
-                });
-
-            modelBuilder.Entity("Domain.Entities.Doctor", b =>
-                {
-                    b.HasOne("Domain.Entities.User", "User")
-                        .WithOne()
-                        .HasForeignKey("Domain.Entities.Doctor", "UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Entities.User", null)
-                        .WithOne("Doctor")
-                        .HasForeignKey("Domain.Entities.Doctor", "UserId1");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Domain.Entities.Patient", b =>
-                {
-                    b.HasOne("Domain.Entities.User", "User")
-                        .WithOne()
-                        .HasForeignKey("Domain.Entities.Patient", "UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Entities.User", null)
-                        .WithOne("Patient")
-                        .HasForeignKey("Domain.Entities.Patient", "UserId1");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Domain.Entities.User", b =>
@@ -525,6 +443,24 @@ namespace Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Domain.Entities.Doctor", b =>
+                {
+                    b.HasOne("Domain.Entities.User", null)
+                        .WithOne()
+                        .HasForeignKey("Domain.Entities.Doctor", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Domain.Entities.Patient", b =>
+                {
+                    b.HasOne("Domain.Entities.User", null)
+                        .WithOne()
+                        .HasForeignKey("Domain.Entities.Patient", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Domain.Entities.Role", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", null)
@@ -547,15 +483,6 @@ namespace Infrastructure.Migrations
             modelBuilder.Entity("Domain.Entities.Patient", b =>
                 {
                     b.Navigation("Appointments");
-                });
-
-            modelBuilder.Entity("Domain.Entities.User", b =>
-                {
-                    b.Navigation("Doctor")
-                        .IsRequired();
-
-                    b.Navigation("Patient")
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("Domain.Entities.Role", b =>

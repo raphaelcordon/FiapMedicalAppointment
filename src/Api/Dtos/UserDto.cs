@@ -1,3 +1,5 @@
+using Domain.Entities;
+
 namespace Api.Dtos;
 
 public class UserDto

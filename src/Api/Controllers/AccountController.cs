@@ -43,13 +43,16 @@ public class AccountController : ControllerBase
                 {
                     return BadRequest(roleResult.Errors);
                 }
-                return Ok("User created successfully with role: " + model.Role);
+            
+                var token = GenerateJwtToken(user);
+                return Ok(new { Token = token });
             }
 
             return BadRequest(result.Errors);
         }
         catch (Exception ex)
         {
+            // Log the exception
             return StatusCode(500, "An internal error occurred.");
         }
     }

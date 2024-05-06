@@ -92,6 +92,9 @@ using (var scope = app.Services.CreateScope())
 }
 
 
+builder.Logging.AddConsole(options => options.IncludeScopes = true);
+builder.Logging.SetMinimumLevel(LogLevel.Debug);
+
 app.UseSwagger();
 app.UseSwaggerUI();
 

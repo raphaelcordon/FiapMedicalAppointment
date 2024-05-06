@@ -208,26 +208,17 @@ namespace Infrastructure.Migrations
                 name: "Doctors",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    FirstName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    LastName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    UserId1 = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Doctors", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Doctors_AspNetUsers_UserId",
-                        column: x => x.UserId,
+                        name: "FK_Doctors_AspNetUsers_Id",
+                        column: x => x.Id,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_Doctors_AspNetUsers_UserId1",
-                        column: x => x.UserId1,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id");
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -235,28 +226,19 @@ namespace Infrastructure.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    FirstName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    LastName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Cpf = table.Column<string>(type: "nvarchar(11)", maxLength: 11, nullable: false),
                     Address = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
-                    Zip = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
-                    UserId1 = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
+                    Zip = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Patients", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Patients_AspNetUsers_UserId",
-                        column: x => x.UserId,
+                        name: "FK_Patients_AspNetUsers_Id",
+                        column: x => x.Id,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_Patients_AspNetUsers_UserId1",
-                        column: x => x.UserId1,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id");
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -379,32 +361,6 @@ namespace Infrastructure.Migrations
                 name: "IX_DoctorMedicalSpecialty_MedicalSpecialtiesId",
                 table: "DoctorMedicalSpecialty",
                 column: "MedicalSpecialtiesId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Doctors_UserId",
-                table: "Doctors",
-                column: "UserId",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Doctors_UserId1",
-                table: "Doctors",
-                column: "UserId1",
-                unique: true,
-                filter: "[UserId1] IS NOT NULL");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Patients_UserId",
-                table: "Patients",
-                column: "UserId",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Patients_UserId1",
-                table: "Patients",
-                column: "UserId1",
-                unique: true,
-                filter: "[UserId1] IS NOT NULL");
         }
 
         /// <inheritdoc />

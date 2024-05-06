@@ -15,7 +15,7 @@ public static class UserRolesCreation
             var roleExist = await roleManager.RoleExistsAsync(roleName);
             if (!roleExist)
             {
-                // Use the standard Name property provided by IdentityRole
+                // Use the standard Name property provided by IdentityRolea
                 var roleResult = await roleManager.CreateAsync(new Role { Name = roleName });
                 if (!roleResult.Succeeded)
                 {

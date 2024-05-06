@@ -37,34 +37,42 @@ public class PatientService : IPatientService
 
     public async Task<PatientResponseDto> Insert(PatientRequestDto dto)
     {
-        using (var transaction = _repository.BeginTransaction())
+        using var transaction = _repository.BeginTransaction();
+        try
         {
-            try
+            // Create the user
+            var user = new User
             {
-                var user = new User
-                {
-                    UserName = dto.UserDto.UserName,
-                    Email = dto.UserDto.Email
-                };
-                var createUserResult = await _userManager.CreateAsync(user, dto.UserDto.Password);
-                if (!createUserResult.Succeeded)
-                {
-                    throw new Exception("User creation failed");
-                }
+                UserName = dto.UserDto.UserName,
+                Email = dto.UserDto.Email
+            };
 
-                var patient = _mapper.Map<Patient>(dto);
-                patient.UserId = user.Id;
-                await _repository.AddAsync(patient);
-                await _repository.SaveChangesAsync();
-
-                transaction.Commit();
-                return _mapper.Map<PatientResponseDto>(patient);
-            }
-            catch (Exception)
+            var createUserResult = await _userManager.CreateAsync(user, dto.UserDto.Password);
+            if (!createUserResult.Succeeded)
             {
-                transaction.Rollback();
-                throw;
+                throw new Exception("User creation failed: " + createUserResult.Errors.FirstOrDefault()?.Description);
             }
+
+            // Assign the role of 'Patient' to the user
+            var addToRoleResult = await _userManager.AddToRoleAsync(user, "Patient");
+            if (!addToRoleResult.Succeeded)
+            {
+                throw new Exception("Adding user to role failed: " + addToRoleResult.Errors.FirstOrDefault()?.Description);
+            }
+
+            // Create the patient record, assuming Patient entity has properties that relate specifically to the role
+            var patient = _mapper.Map<Patient>(dto);
+            patient.Id = user.Id; // Link the Patient entity with the User entity
+            await _repository.AddAsync(patient);
+            await _repository.SaveChangesAsync();
+
+            transaction.Commit();
+            return _mapper.Map<PatientResponseDto>(patient);
+        }
+        catch (Exception ex)
+        {
+            transaction.Rollback();
+            throw new Exception("An error occurred while creating the patient: " + ex.Message, ex);
         }
     }
 
