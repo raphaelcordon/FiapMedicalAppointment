@@ -5,6 +5,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Configuration;
 
@@ -23,28 +24,37 @@ public class AccountController : ControllerBase
         _configuration = configuration;
     }
     
+    [AllowAnonymous]
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterDto model)
     {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-
-        var user = new User { UserName = model.Email, Email = model.Email };
-        var result = await _userManager.CreateAsync(user, model.Password);
-
-        if (result.Succeeded)
+        try
         {
-            var roleResult = await _userManager.AddToRoleAsync(user, model.Role);
-            if (!roleResult.Succeeded)
-            {
-                return BadRequest(roleResult.Errors);
-            }
-            return Ok("User created successfully with role: " + model.Role);
-        }
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-        return BadRequest(result.Errors);
+            var user = new User { UserName = model.Email, Email = model.Email };
+            var result = await _userManager.CreateAsync(user, model.Password);
+
+            if (result.Succeeded)
+            {
+                var roleResult = await _userManager.AddToRoleAsync(user, model.Role);
+                if (!roleResult.Succeeded)
+                {
+                    return BadRequest(roleResult.Errors);
+                }
+                return Ok("User created successfully with role: " + model.Role);
+            }
+
+            return BadRequest(result.Errors);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, "An internal error occurred.");
+        }
     }
 
+    [AllowAnonymous]
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequestDto model)
     {

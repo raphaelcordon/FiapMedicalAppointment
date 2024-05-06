@@ -2,8 +2,9 @@ namespace Domain.Entities;
 
 public class Patient
 {
-    public User User { get; set; }
+    public Guid Id { get; set; }
     public Guid UserId { get; set; }
+    public User User { get; set; }
     public string FirstName { get; set; }
     public string LastName { get; set; }
     public string Cpf { get; set; }

@@ -39,22 +39,33 @@ public class DoctorService : IDoctorService
 
     public async Task<DoctorResponseDto> Insert(DoctorRequestDto dto)
     {
-        var user = new User
+        using var transaction = _repository.BeginTransaction();
+        try
         {
-            UserName = dto.UserDto.UserName,
-            Email = dto.UserDto.Email
-        };
-        var createUserResult = await _userManager.CreateAsync(user, dto.UserDto.Password);
-        if (!createUserResult.Succeeded)
-        {
-            throw new Exception("User creation failed");
+            var user = new User
+            {
+                UserName = dto.UserDto.UserName,
+                Email = dto.UserDto.Email
+            };
+            var createUserResult = await _userManager.CreateAsync(user, dto.UserDto.Password);
+            if (!createUserResult.Succeeded)
+            {
+                throw new Exception("User creation failed");
+            }
+
+            var doctor = _mapper.Map<Doctor>(dto);
+            doctor.UserId = user.Id;
+            await _repository.AddAsync(doctor);
+            await _repository.SaveChangesAsync();
+
+            transaction.Commit();
+            return _mapper.Map<DoctorResponseDto>(doctor);
         }
-        
-        var doctor = _mapper.Map<Doctor>(dto);
-        doctor.UserId = user.Id;
-        await _repository.AddAsync(doctor);
-        await _repository.SaveChangesAsync();
-        return _mapper.Map<DoctorResponseDto>(doctor);
+        catch (Exception)
+        {
+            transaction.Rollback();
+            throw;
+        }
     }
 
     public async Task<DoctorResponseDto> Edit(Guid id, DoctorRequestDto dto)

@@ -1,6 +1,26 @@
-﻿services:
+﻿version: '3.8'
+services:
   api:
-    image: api
     build:
-      context: .
-      dockerfile: Api/Dockerfile
+      context: .  # This sets the context to the directory containing the Dockerfile
+      dockerfile: Dockerfile
+    ports:
+      - "5002:8080"
+    depends_on:
+      - db
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: Server=db;Database=sub-database;User=sa;Password=someThingComplicated1234;
+
+  db:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    environment:
+      SA_PASSWORD: "someThingComplicated1234"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sql_data:/var/opt/mssql
+
+volumes:
+  sql_data:

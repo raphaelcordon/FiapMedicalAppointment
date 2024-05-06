@@ -3,11 +3,11 @@ using Microsoft.AspNetCore.Identity;
 
 namespace Api.Common;
 
-public class UserRolesCreation
+public static class UserRolesCreation
 {
     public static async Task CreateRoles(IServiceProvider serviceProvider)
     {
-        var roleManager = serviceProvider.GetRequiredService<RoleManager<Role>>(); // Correct type here
+        var roleManager = serviceProvider.GetRequiredService<RoleManager<Role>>();
         string[] roleNames = { "Admin", "Patient", "Doctor" };
 
         foreach (var roleName in roleNames)
@@ -15,7 +15,16 @@ public class UserRolesCreation
             var roleExist = await roleManager.RoleExistsAsync(roleName);
             if (!roleExist)
             {
-                await roleManager.CreateAsync(new Role { Name = roleName }); // Use custom Role constructor
+                // Use the standard Name property provided by IdentityRole
+                var roleResult = await roleManager.CreateAsync(new Role { Name = roleName });
+                if (!roleResult.Succeeded)
+                {
+                    // Log errors or handle them
+                    foreach (var error in roleResult.Errors)
+                    {
+                        Console.WriteLine($"Error creating role: {error.Description}");
+                    }
+                }
             }
         }
     }

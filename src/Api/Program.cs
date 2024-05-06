@@ -2,6 +2,7 @@ using System.Text;
 using Api.Common;
 using Domain.Entities;
 using Infrastructure.Database;
+using Infrastructure.Database.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -76,11 +77,13 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddApplication();
 
 var app = builder.Build();
+
+app.MigrateDatabase();
 
 using (var scope = app.Services.CreateScope())
 {
@@ -88,11 +91,9 @@ using (var scope = app.Services.CreateScope())
     await UserRolesCreation.CreateRoles(services);
 }
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
@@ -100,5 +101,6 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.MapControllers();
 
 app.Run();

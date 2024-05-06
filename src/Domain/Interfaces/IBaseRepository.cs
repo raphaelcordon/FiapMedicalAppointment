@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Domain.Interfaces;
 
@@ -12,4 +13,5 @@ public interface IBaseRepository<TEntity> where TEntity : class
     IEnumerable<TEntity> List();
     Task<int> SaveChangesAsync();
     void Dispose();
+    IDbContextTransaction BeginTransaction();
 }

@@ -37,22 +37,35 @@ public class PatientService : IPatientService
 
     public async Task<PatientResponseDto> Insert(PatientRequestDto dto)
     {
-        var user = new User
+        using (var transaction = _repository.BeginTransaction())
         {
-            UserName = dto.UserDto.UserName,
-            Email = dto.UserDto.Email
-        };
-        var createUserResult = await _userManager.CreateAsync(user, dto.UserDto.Password);
-        if (!createUserResult.Succeeded)
-        {
-            throw new Exception("User creation failed");
+            try
+            {
+                var user = new User
+                {
+                    UserName = dto.UserDto.UserName,
+                    Email = dto.UserDto.Email
+                };
+                var createUserResult = await _userManager.CreateAsync(user, dto.UserDto.Password);
+                if (!createUserResult.Succeeded)
+                {
+                    throw new Exception("User creation failed");
+                }
+
+                var patient = _mapper.Map<Patient>(dto);
+                patient.UserId = user.Id;
+                await _repository.AddAsync(patient);
+                await _repository.SaveChangesAsync();
+
+                transaction.Commit();
+                return _mapper.Map<PatientResponseDto>(patient);
+            }
+            catch (Exception)
+            {
+                transaction.Rollback();
+                throw;
+            }
         }
-        
-        var patient = _mapper.Map<Patient>(dto);
-        patient.UserId = user.Id;
-        await _repository.AddAsync(patient);
-        await _repository.SaveChangesAsync();
-        return _mapper.Map<PatientResponseDto>(patient);
     }
 
     public async Task<PatientResponseDto> Edit(Guid id, PatientRequestDto dto)
