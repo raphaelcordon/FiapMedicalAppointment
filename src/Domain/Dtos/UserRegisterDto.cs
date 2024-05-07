@@ -2,9 +2,10 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Api.Dtos;
 
-public class RegisterDto
+public class UserRegisterDto
 {
     [Required]
+    [EmailAddress]
     public string Email { get; set; }
 
     [Required]
@@ -13,4 +14,7 @@ public class RegisterDto
 
     [Required]
     public string Role { get; set; } 
+    
+    public string Address { get; set; }
+    public string PhoneNumber { get; set; }
 }

@@ -18,7 +18,7 @@ builder.Services.AddDbContext<DatabaseContext>(options =>
 // Configure Identity with the User entity
 builder.Services.AddIdentity<User, Role>(options =>
     {
-        options.SignIn.RequireConfirmedAccount = true;
+        options.SignIn.RequireConfirmedAccount = false;
         options.Password.RequireNonAlphanumeric = false;
         options.Password.RequireDigit = true;
         options.Password.RequiredLength = 5;
@@ -36,8 +36,8 @@ builder.Services.AddAuthentication(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateIssuer = true,
-            ValidateAudience = true,
+            ValidateIssuer = false,
+            ValidateAudience = false,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
@@ -49,7 +49,8 @@ builder.Services.AddAuthentication(options =>
 // Configure Swagger with JWT Authentication support
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Medical Appointment", Version = "v1" });
+    c.AddServer(new OpenApiServer() { Url = "http://localhost:5002" });
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] and then your token.",
@@ -90,10 +91,6 @@ using (var scope = app.Services.CreateScope())
     var services = scope.ServiceProvider;
     await UserRolesCreation.CreateRoles(services);
 }
-
-
-builder.Logging.AddConsole(options => options.IncludeScopes = true);
-builder.Logging.SetMinimumLevel(LogLevel.Debug);
 
 app.UseSwagger();
 app.UseSwaggerUI();

@@ -7,7 +7,6 @@ using System.Text;
 using Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.Extensions.Configuration;
 
 [ApiController]
 [Route("[controller]")]
@@ -26,35 +25,26 @@ public class AccountController : ControllerBase
     
     [AllowAnonymous]
     [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] RegisterDto model)
+    public async Task<IActionResult> Register(UserRegisterDto model)
     {
-        try
+        var user = new UserProfile
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            UserName = model.Email,
+            Email = model.Email,
+            Address = model.Address,
+            PhoneNumber = model.PhoneNumber
+        };
 
-            var user = new User { UserName = model.Email, Email = model.Email };
-            var result = await _userManager.CreateAsync(user, model.Password);
-
-            if (result.Succeeded)
-            {
-                var roleResult = await _userManager.AddToRoleAsync(user, model.Role);
-                if (!roleResult.Succeeded)
-                {
-                    return BadRequest(roleResult.Errors);
-                }
-            
-                var token = GenerateJwtToken(user);
-                return Ok(new { Token = token });
-            }
-
+        var result = await _userManager.CreateAsync(user, model.Password);
+        if (!result.Succeeded)
             return BadRequest(result.Errors);
-        }
-        catch (Exception ex)
-        {
-            // Log the exception
-            return StatusCode(500, "An internal error occurred.");
-        }
+
+        // Add to role
+        var roleResult = await _userManager.AddToRoleAsync(user, model.Role);
+        if (!roleResult.Succeeded)
+            return BadRequest(roleResult.Errors);
+
+        return Ok(new { UserId = user.Id });
     }
 
     [AllowAnonymous]
@@ -67,25 +57,31 @@ public class AccountController : ControllerBase
             var result = await _signInManager.PasswordSignInAsync(user, model.Password, isPersistent: false, lockoutOnFailure: false);
             if (result.Succeeded)
             {
-                var token = GenerateJwtToken(user);
+                var token = await GenerateJwtToken(user);
                 return Ok(new LoginResponseDto { Token = token });
             }
         }
         return Unauthorized();
     }
 
-    private string GenerateJwtToken(User user)
+    private async Task<string> GenerateJwtToken(User user)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]);
+
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.Name, user.UserName),
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
+        };
+    
+        // Dynamically adding roles to claims
+        var roles = await _userManager.GetRolesAsync(user);
+        claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
+
         var tokenDescriptor = new SecurityTokenDescriptor
         {
-            Subject = new ClaimsIdentity(new Claim[]
-            {
-                new Claim(ClaimTypes.Name, user.UserName),
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Role, "defaultRole")
-            }),
+            Subject = new ClaimsIdentity(claims),
             Expires = DateTime.UtcNow.AddDays(1),
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
         };
@@ -93,4 +89,5 @@ public class AccountController : ControllerBase
         var token = tokenHandler.CreateToken(tokenDescriptor);
         return tokenHandler.WriteToken(token);
     }
+
 }

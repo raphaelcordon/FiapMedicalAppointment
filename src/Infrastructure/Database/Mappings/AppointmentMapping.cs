@@ -2,26 +2,23 @@ using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Infrastructure.Database.Mappings;
-
 public class AppointmentMapping : IEntityTypeConfiguration<Appointment>
 {
     public void Configure(EntityTypeBuilder<Appointment> builder)
     {
         builder.ToTable(nameof(Appointment));
-
         builder.HasKey(a => a.Id);
 
         builder.Property(a => a.AppointmentDateTime).IsRequired();
-
-        builder.HasOne(a => a.Patient)
-            .WithMany(p => p.Appointments)
-            .HasForeignKey(a => a.PatientId)
+        
+        builder.HasOne(a => a.Doctor)
+            .WithMany()
+            .HasForeignKey(a => a.DoctorId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(a => a.Doctor)
-            .WithMany(d => d.Appointments)
-            .HasForeignKey(a => a.DoctorId)
+        builder.HasOne(a => a.Patient)
+            .WithMany()
+            .HasForeignKey(a => a.PatientId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(a => a.AppointmentSpan)
