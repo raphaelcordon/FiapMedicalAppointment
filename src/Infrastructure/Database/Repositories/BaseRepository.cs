@@ -43,11 +43,33 @@ public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : 
         return Context.Database.BeginTransaction();
     }
 
+    public async Task<object> ListAsync()
+    {
+        if (typeof(ISoftDeletable).IsAssignableFrom(typeof(TEntity)))
+        {
+            return await DbSet.AsNoTracking()
+                .Where(x => ((ISoftDeletable)(object)x).IsActive)
+                .ToListAsync();
+        }
+
+        return await DbSet.AsNoTracking().ToListAsync();
+    }
+
     public async Task DeleteAsync(Guid id)
     {
         var entity = await DbSet.FindAsync(id);
-        if (entity is not null)
-            DbSet.Remove(entity);
+        if (entity != null)
+        {
+            if (typeof(ISoftDeletable).IsAssignableFrom(typeof(TEntity)))
+            {
+                ((ISoftDeletable)entity).IsActive = false;
+                DbSet.Update(entity);
+            }
+            else
+            {
+                DbSet.Remove(entity);
+            }
+        }
     }
 
     public IEnumerable<TEntity> List()

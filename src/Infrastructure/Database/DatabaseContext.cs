@@ -11,10 +11,8 @@ public class DatabaseContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
     public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options) {}
 
     public DbSet<Appointment> Appointments { get; set; }
-    public DbSet<Doctor> Doctors { get; set; }
-    public DbSet<Patient> Patients { get; set; }
     public DbSet<AppointmentSpan> AppointmentSpans { get; set; }
-    public DbSet<Role> Roles { get; set; }
+    public DbSet<MedicalSpecialty> MedicalSpecialties { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -22,8 +20,7 @@ public class DatabaseContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
         
         modelBuilder.ApplyConfiguration(new AppointmentMapping());
         modelBuilder.ApplyConfiguration(new AppointmentSpanMapping());
-        modelBuilder.ApplyConfiguration(new DoctorMapping());
-        modelBuilder.ApplyConfiguration(new PatientMapping());
         modelBuilder.ApplyConfiguration(new RoleMapping());
+        modelBuilder.ApplyConfiguration(new MedicalSpecialtyMapping());
     }
 }

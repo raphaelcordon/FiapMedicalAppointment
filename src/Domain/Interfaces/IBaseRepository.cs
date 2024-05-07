@@ -14,4 +14,5 @@ public interface IBaseRepository<TEntity> where TEntity : class
     Task<int> SaveChangesAsync();
     void Dispose();
     IDbContextTransaction BeginTransaction();
+    Task<object> ListAsync();
 }

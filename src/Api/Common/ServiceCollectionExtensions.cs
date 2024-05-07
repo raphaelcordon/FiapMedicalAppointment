@@ -9,10 +9,8 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
         services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
-
         
-        services.AddScoped<IDoctorService, DoctorService>();
-        services.AddScoped<IPatientService, PatientService>();
+        services.AddScoped<IUserService, UserService>();
         
         services.AddAutoMapper(cfg => cfg.AddProfile<AutoMapperConfigurations>());
 
