@@ -28,14 +28,15 @@ jobs:
           docker tag ${{ secrets.DOCKER_REPOSITORY }}:${{ github.sha }} ${{ secrets.DOCKER_REPOSITORY }}:latest
           docker push ${{ secrets.DOCKER_REPOSITORY }}:latest
 
-  # Placeholder for test job
   test:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - name: Run tests
-        run: echo "Tests would run here"
+        run: |
+          echo "Run your .NET tests here"
+          # Example: docker run --rm ${{ secrets.DOCKER_REPOSITORY }}:${{ github.sha }} dotnet test
 
   lint:
     needs: test
@@ -43,7 +44,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Run linter
-        run: docker run --rm ${{ secrets.DOCKER_REPOSITORY }}:${{ github.sha }} dotnet tool run dotnet-format -- --check
+        run: |
+          echo "Run your .NET format check here"
+          # Example: docker run --rm ${{ secrets.DOCKER_REPOSITORY }}:${{ github.sha }} dotnet tool run dotnet-format -- --check
 
   deploy:
     needs: lint
