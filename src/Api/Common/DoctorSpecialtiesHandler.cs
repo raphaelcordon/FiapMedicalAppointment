@@ -3,33 +3,40 @@ using Infrastructure.Database;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
-namespace Api.Common;
-
-public class DoctorSpecialtiesHandler
+namespace Api.Common
 {
-    private readonly UserManager<User> _userManager;
-    private readonly DatabaseContext _context;
-
-    public DoctorSpecialtiesHandler(UserManager<User> userManager, DatabaseContext context)
+    public class DoctorSpecialtiesHandler
     {
-        _userManager = userManager;
-        _context = context;
-    }
-    
-    public async Task AddSpecialtyToDoctor(string userId, string specialtyName)
-    {
-        var user = await _userManager.FindByIdAsync(userId) as UserProfile;
-        if (user == null || !await _userManager.IsInRoleAsync(user, "Doctor"))
-            throw new Exception("User is not a doctor or doesn't exist.");
+        private readonly UserManager<User> _userManager;
+        private readonly DatabaseContext _context;
 
-        var specialty = await _context.MedicalSpecialties.FirstOrDefaultAsync(s => s.Specialty == specialtyName);
-        if (specialty == null)
+        public DoctorSpecialtiesHandler(UserManager<User> userManager, DatabaseContext context)
         {
-            specialty = new MedicalSpecialty { Specialty = specialtyName };
-            _context.MedicalSpecialties.Add(specialty);
+            _userManager = userManager;
+            _context = context;
         }
+        
+        public async Task AddSpecialtyToDoctor(string userId, string specialtyName)
+        {
+            var user = await _userManager.FindByIdAsync(userId) as UserProfile;
+            if (user == null || !await _userManager.IsInRoleAsync(user, "Doctor"))
+                throw new Exception("User is not a doctor or doesn't exist.");
 
-        user.MedicalSpecialties.Add(specialty);
-        await _context.SaveChangesAsync();
+            var specialty = await _context.MedicalSpecialties.FirstOrDefaultAsync(s => s.Specialty == specialtyName);
+            if (specialty == null)
+            {
+                specialty = new MedicalSpecialty { Specialty = specialtyName };
+                _context.MedicalSpecialties.Add(specialty);
+                await _context.SaveChangesAsync(); 
+            }
+
+            // Check if the user already has this specialty
+            var userSpecialty = user.MedicalSpecialties.FirstOrDefault(ms => ms.Specialty == specialtyName);
+            if (userSpecialty == null)
+            {
+                user.MedicalSpecialties.Add(specialty);
+                await _userManager.UpdateAsync(user); 
+            }
+        }
     }
 }

@@ -1,11 +1,14 @@
+using System;
+using System.Collections.Generic;
 using System.Linq.Expressions;
-using Domain.Interfaces;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Domain.Interfaces;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Infrastructure.Database.Repositories;
 
-public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : class
+public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : class, ISoftDeletable
 {
     protected readonly DatabaseContext Context;
     protected readonly DbSet<TEntity> DbSet;
@@ -27,9 +30,9 @@ public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : 
         return await DbSet.FindAsync(id);
     }
 
-    public async Task<TEntity?> FindAsyncByFilter(Expression<Func<TEntity, bool>> filter)
+    public IQueryable<TEntity> FindByCondition(Expression<Func<TEntity, bool>> condition)
     {
-        return await DbSet.Where(filter).FirstOrDefaultAsync();
+        return DbSet.Where(condition);
     }
 
     public TEntity Update(TEntity entity)
@@ -37,44 +40,37 @@ public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : 
         DbSet.Update(entity);
         return entity;
     }
-    
-    public IDbContextTransaction BeginTransaction()
-    {
-        return Context.Database.BeginTransaction();
-    }
-
-    public async Task<object> ListAsync()
-    {
-        if (typeof(ISoftDeletable).IsAssignableFrom(typeof(TEntity)))
-        {
-            return await DbSet.AsNoTracking()
-                .Where(x => ((ISoftDeletable)(object)x).IsActive)
-                .ToListAsync();
-        }
-
-        return await DbSet.AsNoTracking().ToListAsync();
-    }
 
     public async Task DeleteAsync(Guid id)
     {
         var entity = await DbSet.FindAsync(id);
         if (entity != null)
         {
-            if (typeof(ISoftDeletable).IsAssignableFrom(typeof(TEntity)))
+            if (entity is ISoftDeletable softDeletable)
             {
-                ((ISoftDeletable)entity).IsActive = false;
+                softDeletable.IsActive = false;
                 DbSet.Update(entity);
             }
             else
             {
                 DbSet.Remove(entity);
             }
+            await SaveChangesAsync();
         }
     }
 
     public IEnumerable<TEntity> List()
     {
-        return DbSet.AsNoTracking().AsQueryable();
+        return DbSet.AsNoTracking().ToList();
+    }
+
+    public async Task<List<TEntity>> ListAsync()
+    {
+        if (typeof(ISoftDeletable).IsAssignableFrom(typeof(TEntity)))
+        {
+            return await DbSet.AsNoTracking().Where(x => ((ISoftDeletable)(object)x).IsActive).ToListAsync();
+        }
+        return await DbSet.AsNoTracking().ToListAsync();
     }
 
     public async Task<int> SaveChangesAsync()
@@ -85,5 +81,10 @@ public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : 
     public void Dispose()
     {
         Context?.Dispose();
+    }
+
+    public IDbContextTransaction BeginTransaction()
+    {
+        return Context.Database.BeginTransaction();
     }
 }

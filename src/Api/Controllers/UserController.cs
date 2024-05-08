@@ -1,6 +1,6 @@
 using Api.Common;
-using Api.Dtos;
-using Api.Services;
+using Domain.Dtos;
+using Domain.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,7 +17,7 @@ public class UserController : ControllerBase
         _userService = userService;
     }
     
-    [Authorize(Roles = "Admin")]
+    [Authorize]
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<UserProfileResponseDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllUsers()
@@ -29,7 +29,7 @@ public class UserController : ControllerBase
         return Ok(result);
     }
     
-    [Authorize(Roles = "Admin")]
+    [Authorize]
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(UserProfileResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -53,7 +53,20 @@ public class UserController : ControllerBase
         }
     }
     
-    [Authorize(Roles = "Admin")]
+    [HttpGet("role/{roleName}")]
+    public async Task<IActionResult> GetUsersByRole(string roleName)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var users = await _userService.GetUsersByRole(roleName);
+        if (users == null)
+            return NotFound($"No users found with role {roleName}");
+
+        return Ok(users);
+    }
+    
+    [Authorize]
     [HttpPut("{id}")]
     [ProducesResponseType(typeof(UserProfileResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -71,7 +84,7 @@ public class UserController : ControllerBase
         }
     }
     
-    [Authorize(Roles = "Admin")]
+    [Authorize]
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

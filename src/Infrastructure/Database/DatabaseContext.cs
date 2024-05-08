@@ -22,5 +22,13 @@ public class DatabaseContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
         modelBuilder.ApplyConfiguration(new AppointmentSpanMapping());
         modelBuilder.ApplyConfiguration(new RoleMapping());
         modelBuilder.ApplyConfiguration(new MedicalSpecialtyMapping());
+        
+        // Seed Appointment Spans
+        modelBuilder.Entity<AppointmentSpan>().HasData(
+            new AppointmentSpan { Id = Guid.NewGuid(), Duration = 15 },
+            new AppointmentSpan { Id = Guid.NewGuid(), Duration = 30 },
+            new AppointmentSpan { Id = Guid.NewGuid(), Duration = 45 },
+            new AppointmentSpan { Id = Guid.NewGuid(), Duration = 60 }
+        );
     }
 }

@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20240507124559_InitialCreate")]
+    [Migration("20240508120413_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -40,8 +40,19 @@ namespace Infrastructure.Migrations
                     b.Property<Guid>("DoctorId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
                     b.Property<Guid>("PatientId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("SpecialtyId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.HasKey("Id");
 
@@ -50,6 +61,8 @@ namespace Infrastructure.Migrations
                     b.HasIndex("DoctorId");
 
                     b.HasIndex("PatientId");
+
+                    b.HasIndex("SpecialtyId");
 
                     b.ToTable("Appointment", (string)null);
                 });
@@ -63,9 +76,38 @@ namespace Infrastructure.Migrations
                     b.Property<int>("Duration")
                         .HasColumnType("int");
 
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
                     b.HasKey("Id");
 
                     b.ToTable("AppointmentSpan", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("00db5e64-bf24-4f3a-8d1e-2f6739b9b567"),
+                            Duration = 15,
+                            IsActive = true
+                        },
+                        new
+                        {
+                            Id = new Guid("478139c2-dd05-40be-a7bc-7afe1cf8f19c"),
+                            Duration = 30,
+                            IsActive = true
+                        },
+                        new
+                        {
+                            Id = new Guid("584f99aa-eb10-4d58-971a-74e763d95fbb"),
+                            Duration = 45,
+                            IsActive = true
+                        },
+                        new
+                        {
+                            Id = new Guid("b8c02aa0-e14c-4cd2-9fc0-b84f8b986f71"),
+                            Duration = 60,
+                            IsActive = true
+                        });
                 });
 
             modelBuilder.Entity("Domain.Entities.MedicalSpecialty", b =>
@@ -73,6 +115,11 @@ namespace Infrastructure.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
 
                     b.Property<string>("Specialty")
                         .IsRequired()
@@ -166,7 +213,7 @@ namespace Infrastructure.Migrations
                     b.UseTphMappingStrategy();
                 });
 
-            modelBuilder.Entity("MedicalSpecialtyUserProfile", b =>
+            modelBuilder.Entity("MedicalSpecialtyUser", b =>
                 {
                     b.Property<Guid>("MedicalSpecialtiesId")
                         .HasColumnType("uniqueidentifier");
@@ -178,7 +225,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("UsersId");
 
-                    b.ToTable("UserProfileMedicalSpecialties", (string)null);
+                    b.ToTable("UserMedicalSpecialties", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", b =>
@@ -355,11 +402,19 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Domain.Entities.MedicalSpecialty", "Specialty")
+                        .WithMany()
+                        .HasForeignKey("SpecialtyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("AppointmentSpan");
 
                     b.Navigation("Doctor");
 
                     b.Navigation("Patient");
+
+                    b.Navigation("Specialty");
                 });
 
             modelBuilder.Entity("Domain.Entities.User", b =>
@@ -369,7 +424,7 @@ namespace Infrastructure.Migrations
                         .HasForeignKey("RoleId");
                 });
 
-            modelBuilder.Entity("MedicalSpecialtyUserProfile", b =>
+            modelBuilder.Entity("MedicalSpecialtyUser", b =>
                 {
                     b.HasOne("Domain.Entities.MedicalSpecialty", null)
                         .WithMany()
@@ -377,7 +432,7 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Domain.Entities.UserProfile", null)
+                    b.HasOne("Domain.Entities.User", null)
                         .WithMany()
                         .HasForeignKey("UsersId")
                         .OnDelete(DeleteBehavior.Cascade)
