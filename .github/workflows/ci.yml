@@ -54,8 +54,13 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v2
+      - name: Set up SSH Key
+        run: |
+          mkdir -p $HOME/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > $HOME/.ssh/id_rsa
+          chmod 600 $HOME/.ssh/id_rsa
+          ssh-keyscan -H your_droplet_ip >> $HOME/.ssh/known_hosts
       - name: Deploy to Digital Ocean
         run: |
-          ssh -o StrictHostKeyChecking=no -i ${{ secrets.SSH_PRIVATE_KEY }} username@host 'docker pull ${{ secrets.DOCKER_REPOSITORY }}:latest && docker-compose -f docker-compose.deploy.yml up -d'
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@138.197.180.84 'docker pull ${{ secrets.DOCKER_REPOSITORY }}:latest && docker-compose -f docker-compose.deploy.yml up -d'
+  
