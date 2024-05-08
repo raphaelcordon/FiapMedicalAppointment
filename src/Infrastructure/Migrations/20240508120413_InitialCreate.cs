@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
 namespace Infrastructure.Migrations
 {
     /// <inheritdoc />
@@ -16,7 +18,8 @@ namespace Infrastructure.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Duration = table.Column<int>(type: "int", nullable: false)
+                    Duration = table.Column<int>(type: "int", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -42,7 +45,8 @@ namespace Infrastructure.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Specialty = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Specialty = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false, defaultValue: true)
                 },
                 constraints: table =>
                 {
@@ -130,7 +134,10 @@ namespace Infrastructure.Migrations
                     AppointmentDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     DoctorId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     PatientId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    AppointmentSpanId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    AppointmentSpanId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    SpecialtyId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -151,6 +158,12 @@ namespace Infrastructure.Migrations
                         name: "FK_Appointment_AspNetUsers_PatientId",
                         column: x => x.PatientId,
                         principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Appointment_MedicalSpecialties_SpecialtyId",
+                        column: x => x.SpecialtyId,
+                        principalTable: "MedicalSpecialties",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -241,7 +254,7 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "UserProfileMedicalSpecialties",
+                name: "UserMedicalSpecialties",
                 columns: table => new
                 {
                     MedicalSpecialtiesId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -249,19 +262,30 @@ namespace Infrastructure.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_UserProfileMedicalSpecialties", x => new { x.MedicalSpecialtiesId, x.UsersId });
+                    table.PrimaryKey("PK_UserMedicalSpecialties", x => new { x.MedicalSpecialtiesId, x.UsersId });
                     table.ForeignKey(
-                        name: "FK_UserProfileMedicalSpecialties_AspNetUsers_UsersId",
+                        name: "FK_UserMedicalSpecialties_AspNetUsers_UsersId",
                         column: x => x.UsersId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_UserProfileMedicalSpecialties_MedicalSpecialties_MedicalSpecialtiesId",
+                        name: "FK_UserMedicalSpecialties_MedicalSpecialties_MedicalSpecialtiesId",
                         column: x => x.MedicalSpecialtiesId,
                         principalTable: "MedicalSpecialties",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.InsertData(
+                table: "AppointmentSpan",
+                columns: new[] { "Id", "Duration", "IsActive" },
+                values: new object[,]
+                {
+                    { new Guid("00db5e64-bf24-4f3a-8d1e-2f6739b9b567"), 15, true },
+                    { new Guid("478139c2-dd05-40be-a7bc-7afe1cf8f19c"), 30, true },
+                    { new Guid("584f99aa-eb10-4d58-971a-74e763d95fbb"), 45, true },
+                    { new Guid("b8c02aa0-e14c-4cd2-9fc0-b84f8b986f71"), 60, true }
                 });
 
             migrationBuilder.CreateIndex(
@@ -278,6 +302,11 @@ namespace Infrastructure.Migrations
                 name: "IX_Appointment_PatientId",
                 table: "Appointment",
                 column: "PatientId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Appointment_SpecialtyId",
+                table: "Appointment",
+                column: "SpecialtyId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
@@ -324,8 +353,8 @@ namespace Infrastructure.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_UserProfileMedicalSpecialties_UsersId",
-                table: "UserProfileMedicalSpecialties",
+                name: "IX_UserMedicalSpecialties_UsersId",
+                table: "UserMedicalSpecialties",
                 column: "UsersId");
         }
 
@@ -351,7 +380,7 @@ namespace Infrastructure.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "UserProfileMedicalSpecialties");
+                name: "UserMedicalSpecialties");
 
             migrationBuilder.DropTable(
                 name: "AppointmentSpan");
