@@ -1,0 +1,52 @@
+version: '3.8'
+services:
+  api:
+    image: myregistry.com/myapp/api:latest  # Use your registry/repository:tag
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Server=db;Database=sub-database;User=sa;Password=someThingComplicated1234;"
+      # Other environment variables like JWT keys, etc.
+    depends_on:
+      - db
+    networks:
+      - app-network
+
+  db:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    environment:
+      SA_PASSWORD: "someThingComplicated1234"
+      ACCEPT_EULA: "Y"
+    volumes:
+      - sql_data:/var/opt/mssql
+    networks:
+      - app-network
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+      - /etc/letsencrypt:/etc/letsencrypt
+    depends_on:
+      - api
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    volumes:
+      - frontend_build:/usr/share/nginx/html
+    networks:
+      - app-network
+
+volumes:
+  sql_data:
+  frontend_build:
+
+networks:
+  app-network:
+    driver: bridge
