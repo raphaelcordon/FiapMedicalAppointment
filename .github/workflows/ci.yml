@@ -18,21 +18,27 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-
       - name: Pull latest image
         run: docker pull ${{ secrets.DOCKER_REPOSITORY }}:latest || true
-
       - name: Build the Docker image
         run: docker build . --file Dockerfile --tag ${{ secrets.DOCKER_REPOSITORY }}:${{ github.sha }} --cache-from ${{ secrets.DOCKER_REPOSITORY }}:latest
-
       - name: Push the Docker image
         run: |
           docker push ${{ secrets.DOCKER_REPOSITORY }}:${{ github.sha }}
           docker tag ${{ secrets.DOCKER_REPOSITORY }}:${{ github.sha }} ${{ secrets.DOCKER_REPOSITORY }}:latest
           docker push ${{ secrets.DOCKER_REPOSITORY }}:latest
 
-  lint:
+  # Placeholder for test job
+  test:
     needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run tests
+        run: echo "Tests would run here"
+
+  lint:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -50,4 +56,3 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i ${{ secrets.SSH_PRIVATE_KEY }} username@host 'docker pull ${{ secrets.DOCKER_REPOSITORY }}:latest && docker-compose -f docker-compose.deploy.yml up -d'
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-
