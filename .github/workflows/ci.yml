@@ -56,7 +56,12 @@ jobs:
       - uses: actions/checkout@v2
       - name: Set up SSH Key
         run: |
-          ssh -vvv -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@138.197.180.84 'docker pull ${{ secrets.DOCKER_REPOSITORY }}:latest && docker-compose -f docker-compose.deploy.yml up -d'
+          mkdir -p $HOME/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > $HOME/.ssh/id_rsa
+          chmod 600 $HOME/.ssh/id_rsa
+          ssh-keyscan -H 138.197.180.84 >> $HOME/.ssh/known_hosts
+          ls -la $HOME/.ssh
+          cat $HOME/.ssh/id_rsa
       - name: Deploy to Digital Ocean
         run: |
           ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@138.197.180.84 'docker pull ${{ secrets.DOCKER_REPOSITORY }}:latest && docker-compose -f docker-compose.deploy.yml up -d'
