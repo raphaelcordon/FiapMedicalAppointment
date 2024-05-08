@@ -84,7 +84,10 @@ builder.Services.AddApplication();
 
 var app = builder.Build();
 
-app.MigrateDatabase();
+if (app.Environment.IsDevelopment() || Environment.GetEnvironmentVariable("CI") != "true")
+{
+    app.MigrateDatabase();
+}
 
 using (var scope = app.Services.CreateScope())
 {
