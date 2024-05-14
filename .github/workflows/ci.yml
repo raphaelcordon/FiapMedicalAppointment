@@ -69,8 +69,8 @@ jobs:
       - name: Copy configuration files to Droplet
         run: |
           scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa docker-compose.deploy.yml raphael@165.22.82.96:/home/raphael/docker-compose.deploy.yml
-          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@164.90.229.241 'mkdir -p /home/raphael/nginx'
-          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa nginx/default.conf raphael@164.90.229.241:/home/raphael/nginx/default.conf
+          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@165.22.82.96 'mkdir -p /home/raphael/nginx'
+          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa nginx/default.conf raphael@165.22.82.96:/home/raphael/nginx/default.conf
       - name: Deploy to Digital Ocean
         run: |
           ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@165.22.82.96 'docker pull raphaelcordon/fiapmedicalappointment:latest && docker-compose -f /home/raphael/docker-compose.deploy.yml up -d'
