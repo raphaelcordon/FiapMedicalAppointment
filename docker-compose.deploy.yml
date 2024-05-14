@@ -4,7 +4,7 @@ services:
     image: raphaelcordon/fiapmedicalappointment:latest
     environment:
       ASPNETCORE_ENVIRONMENT: Production
-      ConnectionStrings__DefaultConnection: "Server=db,1433;Database=sub-database;User Id=sa;Password=someThingComplicated1234;TrustServerCertificate=true;"
+      ConnectionStrings__DefaultConnection: "Server=db;Database=sub-database;User=sa;Password=someThingComplicated1234;"
     ports:
       - '5002:80'
     depends_on:
@@ -30,8 +30,6 @@ services:
     environment:
       SA_PASSWORD: "someThingComplicated1234"
       ACCEPT_EULA: "Y"
-    ports:
-      - '1433:1433'
     volumes:
       - sql_data:/var/opt/mssql
     networks:
