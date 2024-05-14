@@ -9,7 +9,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DefaultConnection: "Server=db;Database=sub-database;User=sa;Password=someThingComplicated1234;"
     ports:
-      - '5000:80'
+      - '5002:80'
     depends_on:
       - db
     networks:
