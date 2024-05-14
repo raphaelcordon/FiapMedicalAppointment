@@ -2,15 +2,18 @@
 services:
   api:
     build:
-      context: . 
+      context: .
       dockerfile: Dockerfile
-    ports:
-      - "5002:8080"
-    depends_on:
-      - db
+      target: final
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      ConnectionStrings__DefaultConnection: Server=db;Database=sub-database;User=sa;Password=someThingComplicated1234;
+      ConnectionStrings__DefaultConnection: "Server=db;Database=sub-database;User=sa;Password=someThingComplicated1234;"
+    ports:
+      - '5000:80'
+    depends_on:
+      - db
+    networks:
+      - app-network
 
   db:
     image: mcr.microsoft.com/mssql/server:2019-latest
@@ -18,9 +21,15 @@ services:
       SA_PASSWORD: "someThingComplicated1234"
       ACCEPT_EULA: "Y"
     ports:
-      - "1433:1433"
+      - '1433:1433'
     volumes:
       - sql_data:/var/opt/mssql
+    networks:
+      - app-network
 
 volumes:
   sql_data:
+
+networks:
+  app-network:
+    driver: bridge
