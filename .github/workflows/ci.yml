@@ -19,14 +19,14 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Pull latest image
-        run: docker pull ${{ secrets.DOCKER_REPOSITORY }}:latest || true
+        run: docker pull raphaelcordon/fiapmedicalappointment:latest || true
       - name: Build the Docker image
-        run: docker build . --file Dockerfile --tag ${{ secrets.DOCKER_REPOSITORY }}:${{ github.sha }} --cache-from ${{ secrets.DOCKER_REPOSITORY }}:latest
+        run: docker build . --file Dockerfile --tag raphaelcordon/fiapmedicalappointment:${{ github.sha }} --cache-from raphaelcordon/fiapmedicalappointment:latest
       - name: Push the Docker image
         run: |
-          docker push ${{ secrets.DOCKER_REPOSITORY }}:${{ github.sha }}
-          docker tag ${{ secrets.DOCKER_REPOSITORY }}:${{ github.sha }} ${{ secrets.DOCKER_REPOSITORY }}:latest
-          docker push ${{ secrets.DOCKER_REPOSITORY }}:latest
+          docker push raphaelcordon/fiapmedicalappointment:${{ github.sha }}
+          docker tag raphaelcordon/fiapmedicalappointment:${{ github.sha }} raphaelcordon/fiapmedicalappointment:latest
+          docker push raphaelcordon/fiapmedicalappointment:latest
 
   test:
     needs: build-and-push
@@ -36,7 +36,7 @@ jobs:
       - name: Run tests
         run: |
           echo "Run your .NET tests here"
-          # Example: docker run --rm ${{ secrets.DOCKER_REPOSITORY }}:${{ github.sha }} dotnet test
+          # Example: docker run --rm raphaelcordon/fiapmedicalappointment:${{ github.sha }} dotnet test
 
   lint:
     needs: test
@@ -46,7 +46,7 @@ jobs:
       - name: Run linter
         run: |
           echo "Run your .NET format check here"
-          # Example: docker run --rm ${{ secrets.DOCKER_REPOSITORY }}:${{ github.sha }} dotnet tool run dotnet-format -- --check
+          # Example: docker run --rm raphaelcordon/fiapmedicalappointment:${{ github.sha }} dotnet tool run dotnet-format -- --check
 
   deploy:
     needs: lint
@@ -67,4 +67,4 @@ jobs:
           scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa docker-compose.deploy.yml raphael@164.90.229.241:/home/raphael/docker-compose.deploy.yml
       - name: Deploy to Digital Ocean
         run: |
-          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@164.90.229.241 'docker pull ${{ secrets.DOCKER_REPOSITORY }}:latest && docker-compose -f /home/raphael/docker-compose.deploy.yml up -d'
+          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@164.90.229.241 'docker pull raphaelcordon/fiapmedicalappointment:latest && docker-compose -f /home/raphael/docker-compose.deploy.yml up -d'

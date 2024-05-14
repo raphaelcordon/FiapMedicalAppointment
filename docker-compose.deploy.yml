@@ -1,7 +1,7 @@
 version: '3.8'
 services:
   api:
-    image: myregistry.com/myapp/api:latest  # Use your registry/repository:tag
+    image: raphaelcordon/fiapmedicalappointment:latest
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__DefaultConnection: "Server=db;Database=sub-database;User=sa;Password=someThingComplicated1234;"
