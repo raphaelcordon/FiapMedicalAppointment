@@ -63,14 +63,14 @@ jobs:
           mkdir -p $HOME/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' > $HOME/.ssh/id_rsa
           chmod 600 $HOME/.ssh/id_rsa
-          ssh-keyscan -H 165.22.82.96 >> $HOME/.ssh/known_hosts
+          ssh-keyscan -H 134.209.242.61 >> $HOME/.ssh/known_hosts
           ls -la $HOME/.ssh
           cat $HOME/.ssh/id_rsa
       - name: Copy configuration files to Droplet
         run: |
-          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa docker-compose.deploy.yml raphael@165.22.82.96:/home/raphael/docker-compose.deploy.yml
-          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@165.22.82.96 'mkdir -p /home/raphael/nginx'
-          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa nginx/default.conf raphael@165.22.82.96:/home/raphael/nginx/default.conf
+          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa docker-compose.deploy.yml raphael@134.209.242.61:/home/raphael/docker-compose.deploy.yml
+          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 'mkdir -p /home/raphael/nginx'
+          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa nginx/default.conf raphael@134.209.242.61:/home/raphael/nginx/default.conf
       - name: Deploy to Digital Ocean
         run: |
-          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@165.22.82.96 'docker pull raphaelcordon/fiapmedicalappointment:latest && docker-compose -f /home/raphael/docker-compose.deploy.yml up -d'
+          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 'docker pull raphaelcordon/fiapmedicalappointment:latest && docker-compose -f /home/raphael/docker-compose.deploy.yml up -d'
