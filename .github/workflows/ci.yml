@@ -62,6 +62,9 @@ jobs:
           ssh-keyscan -H 164.90.229.241 >> $HOME/.ssh/known_hosts
           ls -la $HOME/.ssh
           cat $HOME/.ssh/id_rsa
+      - name: Copy docker-compose.deploy.yml to Droplet
+        run: |
+          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa docker-compose.deploy.yml raphael@164.90.229.241:/home/raphael/docker-compose.deploy.yml
       - name: Deploy to Digital Ocean
         run: |
-          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@164.90.229.241 'docker pull ${{ secrets.DOCKER_REPOSITORY }}:latest && docker-compose -f docker-compose.deploy.yml up -d'
+          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@164.90.229.241 'docker pull ${{ secrets.DOCKER_REPOSITORY }}:latest && docker-compose -f /home/raphael/docker-compose.deploy.yml up -d'
