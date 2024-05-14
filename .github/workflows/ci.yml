@@ -10,7 +10,7 @@ on:
 
 jobs:
   build-and-push:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2
       - name: Log in to Docker Hub
@@ -30,7 +30,7 @@ jobs:
 
   test:
     needs: build-and-push
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2
       - name: Run tests
@@ -40,7 +40,7 @@ jobs:
 
   lint:
     needs: test
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2
       - name: Run linter
@@ -50,7 +50,7 @@ jobs:
 
   deploy:
     needs: lint
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v2
@@ -59,9 +59,9 @@ jobs:
           mkdir -p $HOME/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > $HOME/.ssh/id_rsa
           chmod 600 $HOME/.ssh/id_rsa
-          ssh-keyscan -H 138.197.180.84 >> $HOME/.ssh/known_hosts
+          ssh-keyscan -H 164.90.229.241 >> $HOME/.ssh/known_hosts
           ls -la $HOME/.ssh
           cat $HOME/.ssh/id_rsa
       - name: Deploy to Digital Ocean
         run: |
-          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@138.197.180.84 'docker pull ${{ secrets.DOCKER_REPOSITORY }}:latest && docker-compose -f docker-compose.deploy.yml up -d'
+          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@164.90.229.241 'docker pull ${{ secrets.DOCKER_REPOSITORY }}:latest && docker-compose -f docker-compose.deploy.yml up -d'
