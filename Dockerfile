@@ -34,6 +34,7 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 COPY --from=backend-publish /app/publish .
 COPY --from=frontend-build /frontend/dist /app/wwwroot
+ENV ASPNETCORE_URLS=http://+:80
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 EXPOSE 80
 ENTRYPOINT ["dotnet", "Api.dll"]

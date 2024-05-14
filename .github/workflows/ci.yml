@@ -66,9 +66,10 @@ jobs:
           ssh-keyscan -H 164.90.229.241 >> $HOME/.ssh/known_hosts
           ls -la $HOME/.ssh
           cat $HOME/.ssh/id_rsa
-      - name: Copy docker-compose.deploy.yml to Droplet
+      - name: Copy configuration files to Droplet
         run: |
           scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa docker-compose.deploy.yml raphael@164.90.229.241:/home/raphael/docker-compose.deploy.yml
+          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@164.90.229.241 'mkdir -p /home/raphael/nginx'
           scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa nginx/default.conf raphael@164.90.229.241:/home/raphael/nginx/default.conf
       - name: Deploy to Digital Ocean
         run: |
