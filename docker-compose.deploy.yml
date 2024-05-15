@@ -20,8 +20,8 @@ services:
     depends_on:
       - api
     volumes:
-      - /etc/letsencrypt:/etc/letsencrypt
       - /home/raphael/nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - /home/raphael/nginx/certs:/etc/nginx/certs
     networks:
       - app-network
 
