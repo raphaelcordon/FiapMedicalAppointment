@@ -23,17 +23,22 @@ RUN dotnet publish "Api.csproj" -c Release -o /app/publish
 
 # Stage 2: Build the frontend
 FROM node:18-alpine AS frontend-build
-WORKDIR /Frontend
-COPY src/Frontend/package.json src/Frontend/package-lock.json ./
+WORKDIR /frontend
+
+COPY src/Frontend/package.json ./package.json
+COPY src/Frontend/package-lock.json ./package-lock.json
+
 RUN npm install
+
 COPY src/Frontend ./
+
 RUN npm run build
 
 # Final stage: Combine backend and frontend
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 COPY --from=backend-publish /app/publish .
-COPY --from=frontend-build /Frontend/dist /app/wwwroot
+COPY --from=frontend-build /frontend/dist /app/wwwroot
 ENV ASPNETCORE_URLS=http://+:80
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 EXPOSE 80
