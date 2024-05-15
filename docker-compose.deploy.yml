@@ -5,28 +5,25 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__DefaultConnection: "Server=db;Database=sub-database;User=sa;Password=someThingComplicated1234;"
-#    ports:
-#      - '5002:80'
     depends_on:
       - db
     networks:
       - app-network
-#    volumes:
-#      - frontend_build:/frontend/dist
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro
 
   nginx:
     image: nginx:1.25
     ports:
       - '80:80'
       - '443:443'
-#    depends_on:
-#      - api
+    depends_on:
+      - api
     volumes:
       - ./nginx:/etc/nginx/conf.d
-#      - frontend_build:/frontend_build
-      - /etc/letsencrypt:/etc/letsencrypt
-#    networks:
-#      - app-network
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    networks:
+      - app-network
 
   db:
     image: mcr.microsoft.com/mssql/server:2019-latest
