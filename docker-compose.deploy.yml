@@ -11,8 +11,8 @@ services:
       - db
     networks:
       - app-network
-    volumes:
-      - frontend_build:/frontend/dist
+#    volumes:
+#      - frontend_build:/frontend/dist
 
   nginx:
     image: nginx:1.25
@@ -23,7 +23,7 @@ services:
 #      - api
     volumes:
       - ./nginx:/etc/nginx/conf.d
-      - frontend_build:/frontend_build
+#      - frontend_build:/frontend_build
       - /etc/letsencrypt:/etc/letsencrypt
 #    networks:
 #      - app-network
