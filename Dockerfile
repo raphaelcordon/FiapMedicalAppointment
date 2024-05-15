@@ -23,7 +23,7 @@ RUN dotnet publish "Api.csproj" -c Release -o /app/publish
 
 # Stage 2: Build the frontend
 FROM node:18-alpine AS frontend-build
-WORKDIR /frontend
+WORKDIR /Frontend
 COPY src/Frontend/package.json src/Frontend/package-lock.json ./
 RUN npm install
 COPY src/Frontend ./
@@ -33,14 +33,14 @@ RUN npm run build
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 COPY --from=backend-publish /app/publish .
-COPY --from=frontend-build /frontend/dist /app/wwwroot
+COPY --from=frontend-build /Frontend/dist /app/wwwroot
 ENV ASPNETCORE_URLS=http://+:80
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 EXPOSE 80
 ENTRYPOINT ["dotnet", "Api.dll"]
 
 # Production environment: use Nginx to serve frontend
-FROM nginx:latest AS production
+FROM nginx:1.25 AS production
 COPY --from=frontend-build /frontend/dist /usr/share/nginx/html
 COPY nginx/default.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
