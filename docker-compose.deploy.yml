@@ -18,8 +18,8 @@ services:
       - '80:80'
       - '443:443'
     volumes:
-      - ./nginx:/etc/nginx/conf.d
       - /etc/letsencrypt:/etc/letsencrypt
+      - ./nginx:/etc/nginx/conf.d
     networks:
       - app-network
 
