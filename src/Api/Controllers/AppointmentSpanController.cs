@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Api.Controllers;
 
 [ApiController]
-[Route("[controller]")]
+[Route("api/[controller]")]
 public class AppointmentSpanController : ControllerBase
 {
     private readonly IBaseRepository<AppointmentSpan> _appointmentSpanRepository;

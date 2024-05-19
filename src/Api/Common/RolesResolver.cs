@@ -2,25 +2,27 @@ using AutoMapper;
 using Domain.Dtos;
 using Domain.Entities;
 using Microsoft.AspNetCore.Identity;
+using System.Collections.Generic;
+using System.Linq;
 
-namespace Api.Common;
-
-public class UserRolesResolver : IValueResolver<UserProfile, UserProfileResponseDto, List<string>>
+namespace Api.Common
 {
-    private readonly UserManager<User> _userManager;
-
-    public UserRolesResolver(UserManager<User> userManager)
+    public class UserRolesResolver : IValueResolver<UserProfile, UserProfileResponseDto, List<string>>
     {
-        _userManager = userManager;
-    }
+        private readonly UserManager<UserProfile> _userManager;
 
-    public List<string> Resolve(UserProfile source, UserProfileResponseDto destination, List<string> destMember, ResolutionContext context)
-    {
-        if (source == null)
-            throw new ArgumentNullException(nameof(source));
+        public UserRolesResolver(UserManager<UserProfile> userManager)
+        {
+            _userManager = userManager;
+        }
 
-        var roles = _userManager.GetRolesAsync(source).Result;
-        return roles.ToList();
+        public List<string> Resolve(UserProfile source, UserProfileResponseDto destination, List<string> destMember, ResolutionContext context)
+        {
+            if (source == null)
+                throw new ArgumentNullException(nameof(source));
+
+            var roles = _userManager.GetRolesAsync(source).Result;
+            return roles.ToList();
+        }
     }
 }
-

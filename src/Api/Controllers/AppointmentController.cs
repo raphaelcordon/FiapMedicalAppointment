@@ -6,7 +6,7 @@ using Domain.Interfaces.Services;
 namespace Api.Controllers;
 
 [ApiController]
-[Route("[controller]")]
+[Route("api/[controller]")]
 public class AppointmentController : ControllerBase
 {
     private readonly IAppointmentService _appointmentService;
