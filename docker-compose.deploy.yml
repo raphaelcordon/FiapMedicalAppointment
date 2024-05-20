@@ -5,10 +5,12 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__DefaultConnection: "Server=db;Database=sub-database;User=sa;Password=someThingComplicated1234;"
-    ports:
-      - '5002:80'
     depends_on:
       - db
+    volumes:
+      - static_files:/static-files
+      - media_files:/media-files
+      - frontend_build:/frontend/dist
     networks:
       - app-network
 
@@ -18,7 +20,10 @@ services:
       - '8080:80'
       - '443:443'
     volumes:
+      - static_files:/static-files
+      - media_files:/media-files
       - ./nginx:/etc/nginx/conf.d
+      - frontend_build:/frontend_build
       - /etc/letsencrypt:/etc/letsencrypt:ro
     networks:
       - app-network
@@ -35,6 +40,9 @@ services:
 
 volumes:
   sql_data:
+  static_files:
+  media_files:
+  frontend_build:
 
 networks:
   app-network:
