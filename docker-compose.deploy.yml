@@ -4,8 +4,8 @@ services:
     image: raphaelcordon/fiapmedicalappointment:latest
     environment:
       ASPNETCORE_ENVIRONMENT: Production
-      JWT_KEY: "${{ secrets.JWT_KEY }}"
-      SQLSERVER_CONNECTIONSTRING: "${{ secrets.SQLSERVER_CONNECTIONSTRING }}"
+      JWT_KEY: ${JWT_KEY}
+      SQLSERVER_CONNECTIONSTRING: ${SQLSERVER_CONNECTIONSTRING}
     depends_on:
       - db
     volumes:
@@ -32,7 +32,7 @@ services:
   db:
     image: mcr.microsoft.com/mssql/server:2019-latest
     environment:
-      SA_PASSWORD: "${{ secrets.SA_PASSWORD }}"
+      SA_PASSWORD: ${SA_PASSWORD}
       ACCEPT_EULA: "Y"
     volumes:
       - sql_data:/var/opt/mssql
