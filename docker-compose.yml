@@ -5,18 +5,11 @@ services:
       context: .
       dockerfile: Dockerfile
       target: final
-      args:
-        ASPNETCORE_ENVIRONMENT: Development
-        JWT_KEY: "development_jwt_key"
-        SQLSERVER_CONNECTIONSTRING: "Server=db;Database=sub-database;User=sa;Password=someThingComplicated1234;TrustServerCertificate=True;"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      JWT_KEY: "development_jwt_key"
-      SQLSERVER_CONNECTIONSTRING: "Server=db;Database=sub-database;User=sa;Password=someThingComplicated1234;TrustServerCertificate=True;"
+      ConnectionStrings__DefaultConnection: "Server=db,1433;Database=sub-database;User Id=sa;Password=someThingComplicated1234;TrustServerCertificate=true;"
     ports:
       - '5002:80'
-    volumes:
-      - ./dataprotection-keys:/root/.aspnet/DataProtection-Keys
     depends_on:
       - db
     networks:
@@ -36,7 +29,6 @@ services:
 
 volumes:
   sql_data:
-  dataprotection-keys:
 
 networks:
   app-network:

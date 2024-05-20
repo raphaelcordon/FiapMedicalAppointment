@@ -12,11 +12,19 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Load configuration from appsettings.*.json files
+builder.Configuration
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
+    .AddEnvironmentVariables();  // This line ensures environment variables are loaded
+
 // Configure Entity Framework Core with SQL Server
+var connectionString = builder.Configuration.GetConnectionString("SqlServerConnectionString") ??
+                       builder.Configuration["ConnectionStrings__DefaultConnection"];
+
 builder.Services.AddDbContext<DatabaseContext>(options =>
-    options.UseSqlServer(
-        Environment.GetEnvironmentVariable("SQLSERVER_CONNECTIONSTRING") ?? 
-        builder.Configuration.GetConnectionString("SqlServerConnectionString")));
+    options.UseSqlServer(connectionString));
 
 // Configure Identity with the User entity
 builder.Services.AddIdentity<UserProfile, Role>(options =>
@@ -86,7 +94,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowSpecificOrigin",
         builder =>
         {
-            builder.WithOrigins("http://localhost:5173") // Frontend URL
+            builder.WithOrigins("http://localhost:5173")
                 .AllowAnyHeader()
                 .AllowAnyMethod();
         });
@@ -100,7 +108,9 @@ var app = builder.Build();
 
 if (app.Environment.IsDevelopment() || Environment.GetEnvironmentVariable("CI") != "true")
 {
-    app.MigrateDatabase();
+    app.UseDeveloperExceptionPage();
+    app.UseSwagger();
+    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Medical Appointment v1"));
 }
 
 using (var scope = app.Services.CreateScope())
@@ -110,9 +120,6 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseCors("AllowSpecificOrigin");
-app.UseSwagger();
-app.UseSwaggerUI();
-
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
