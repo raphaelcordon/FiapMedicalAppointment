@@ -4,7 +4,7 @@ services:
     image: raphaelcordon/fiapmedicalappointment:latest
     environment:
       ASPNETCORE_ENVIRONMENT: Production
-      ConnectionStrings__DefaultConnection: "Server=db;Database=sub-database;User=sa;Password=someThingComplicated1234;"
+      ConnectionStrings__DefaultConnection: "${{ secrets.CONNECTIONSTRINGS }}"
     depends_on:
       - db
     volumes:
@@ -31,7 +31,7 @@ services:
   db:
     image: mcr.microsoft.com/mssql/server:2019-latest
     environment:
-      SA_PASSWORD: "someThingComplicated1234"
+      SA_PASSWORD: "${{ secrets.SA_PASSWORD }}"
       ACCEPT_EULA: "Y"
     volumes:
       - sql_data:/var/opt/mssql
