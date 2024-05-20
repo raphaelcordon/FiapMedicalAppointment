@@ -6,7 +6,7 @@ using Domain.Interfaces.Services;
 namespace Api.Controllers;
 
 [ApiController]
-[Route("[controller]")]
+[Route("api/[controller]")]
 public class AppointmentController : ControllerBase
 {
     private readonly IAppointmentService _appointmentService;
@@ -67,7 +67,7 @@ public class AppointmentController : ControllerBase
     {
         try
         {
-            var updatedAppointment = await _appointmentService.UpdateAppointmentStatus(appointmentId, updateDto.NewStatus);
+            var updatedAppointment = await _appointmentService.UpdateAppointmentStatus(appointmentId, updateDto);
             return Ok(updatedAppointment);
         }
         catch (Exception ex)
@@ -76,6 +76,7 @@ public class AppointmentController : ControllerBase
         }
     }
 
+    
     [Authorize]
     [HttpPost("cancel/{appointmentId}")]
     public async Task<IActionResult> CancelAppointment(Guid appointmentId)

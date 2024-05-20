@@ -5,6 +5,7 @@ using Infrastructure.Database;
 using Infrastructure.Database.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -16,7 +17,7 @@ builder.Services.AddDbContext<DatabaseContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("SqlServerConnectionString")));
 
 // Configure Identity with the User entity
-builder.Services.AddIdentity<User, Role>(options =>
+builder.Services.AddIdentity<UserProfile, Role>(options =>
     {
         options.SignIn.RequireConfirmedAccount = false;
         options.Password.RequireNonAlphanumeric = false;
@@ -24,7 +25,7 @@ builder.Services.AddIdentity<User, Role>(options =>
         options.Password.RequiredLength = 5;
     })
     .AddEntityFrameworkStores<DatabaseContext>()
-    .AddRoleManager<RoleManager<Role>>();
+    .AddDefaultTokenProviders();
 
 // Configure JWT Bearer Authentication
 builder.Services.AddAuthentication(options =>
@@ -78,6 +79,17 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigin",
+        builder =>
+        {
+            builder.WithOrigins("http://localhost:5173") // Frontend URL
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        });
+});
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddApplication();
@@ -95,6 +107,7 @@ using (var scope = app.Services.CreateScope())
     await UserRolesCreation.CreateRoles(services);
 }
 
+app.UseCors("AllowSpecificOrigin");
 app.UseSwagger();
 app.UseSwaggerUI();
 

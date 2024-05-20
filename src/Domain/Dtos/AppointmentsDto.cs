@@ -1,6 +1,5 @@
-namespace Domain.Dtos;
-
-
+namespace Domain.Dtos
+{
     public class ScheduleAppointmentDto
     {
         public Guid DoctorId { get; set; }
@@ -24,6 +23,7 @@ namespace Domain.Dtos;
     public class UpdateAppointmentDto
     {
         public DateTime? NewAppointmentTime { get; set; }
-        public int? NewSpan { get; set; }
+        public Guid NewSpan { get; set; }
         public string NewStatus { get; set; }
     }
+}

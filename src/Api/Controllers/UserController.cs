@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Api.Common;
 using Domain.Dtos;
 using Domain.Interfaces.Services;
@@ -7,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Api.Controllers;
 
 [ApiController]
-[Route("[controller]")]
+[Route("api/[controller]")]
 public class UserController : ControllerBase
 {
     private readonly IUserService _userService;
@@ -60,7 +61,7 @@ public class UserController : ControllerBase
             return BadRequest(ModelState);
 
         var users = await _userService.GetUsersByRole(roleName);
-        if (users == null)
+        if (users == null || users.Count == 0)
             return NotFound($"No users found with role {roleName}");
 
         return Ok(users);
@@ -103,5 +104,19 @@ public class UserController : ControllerBase
         {
             return NotFound(ex.Message);
         }
+    }
+
+    [Authorize]
+    [HttpGet("me")]
+    [ProducesResponseType(typeof(UserProfileResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GetUserProfile()
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userId == null)
+            return Unauthorized();
+
+        var user = await _userService.GetUserById(new Guid(userId));
+        return Ok(user);
     }
 }

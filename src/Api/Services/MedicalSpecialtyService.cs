@@ -1,20 +1,20 @@
+using Api.Common;
+using AutoMapper;
+using Domain.Dtos;
 using Domain.Entities;
 using Domain.Interfaces;
-using Api.Common;
-using Domain.Dtos;
-using AutoMapper;
 using Domain.Interfaces.Services;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
-namespace Api.Services;
 public class MedicalSpecialtyService : IMedicalSpecialtyService
 {
     private readonly IBaseRepository<MedicalSpecialty> _specialtyRepository;
     private readonly IMapper _mapper;
     private readonly IUserService _userService;
-    private readonly UserManager<User> _userManager;
+    private readonly UserManager<UserProfile> _userManager;
 
-    public MedicalSpecialtyService(IBaseRepository<MedicalSpecialty> specialtyRepository, IMapper mapper, IUserService userService, UserManager<User> userManager)
+    public MedicalSpecialtyService(IBaseRepository<MedicalSpecialty> specialtyRepository, IMapper mapper, IUserService userService, UserManager<UserProfile> userManager)
     {
         _specialtyRepository = specialtyRepository;
         _mapper = mapper;
@@ -39,9 +39,9 @@ public class MedicalSpecialtyService : IMedicalSpecialtyService
     public async Task<MedicalSpecialtiesDtos.MedicalSpecialtyDto> AddSpecialty(MedicalSpecialtiesDtos.CreateMedicalSpecialtyDto createDto)
     {
         var specialty = _mapper.Map<MedicalSpecialty>(createDto);
-        var addedSpecialty = await _specialtyRepository.AddAsync(specialty);
+        await _specialtyRepository.AddAsync(specialty);
         await _specialtyRepository.SaveChangesAsync();
-        return _mapper.Map<MedicalSpecialtiesDtos.MedicalSpecialtyDto>(addedSpecialty);
+        return _mapper.Map<MedicalSpecialtiesDtos.MedicalSpecialtyDto>(specialty);
     }
 
     public async Task<MedicalSpecialtiesDtos.MedicalSpecialtyDto> UpdateSpecialty(Guid id, MedicalSpecialtiesDtos.UpdateMedicalSpecialtyDto updateDto)
@@ -51,7 +51,7 @@ public class MedicalSpecialtyService : IMedicalSpecialtyService
             throw new ResourceNotFoundException("Specialty not found.");
 
         specialty.Specialty = updateDto.Specialty;
-        _specialtyRepository.Update(specialty);
+        await _specialtyRepository.UpdateAsync(specialty);
         await _specialtyRepository.SaveChangesAsync();
         return _mapper.Map<MedicalSpecialtiesDtos.MedicalSpecialtyDto>(specialty);
     }
@@ -68,21 +68,37 @@ public class MedicalSpecialtyService : IMedicalSpecialtyService
         if (user == null)
             throw new Exception("User not found.");
 
-        // Ensure the user is a doctor
         if (!await _userManager.IsInRoleAsync(user, "Doctor"))
             throw new Exception("User is not a doctor.");
 
-        // Fetch the specialty and check if it exists
         var specialty = await _specialtyRepository.FindAsync(specialtyId);
         if (specialty == null)
             throw new Exception("Specialty not found.");
 
-        // Check if the doctor already has this specialty
         if (user.MedicalSpecialties.Any(ms => ms.Id == specialtyId))
             throw new Exception("Doctor already has this specialty.");
 
-        // Add the specialty to the doctor's list
         user.MedicalSpecialties.Add(specialty);
-        await _userManager.UpdateAsync(user); // Persist changes
+        await _userManager.UpdateAsync(user);
+    }
+
+    public async Task RemoveSpecialtyFromDoctor(Guid userId, Guid specialtyId)
+    {
+        var user = await _userManager.Users
+            .Include(u => u.MedicalSpecialties)
+            .FirstOrDefaultAsync(u => u.Id == userId);
+
+        if (user == null)
+            throw new Exception("User not found.");
+
+        if (!await _userManager.IsInRoleAsync(user, "Doctor"))
+            throw new Exception("User is not a doctor.");
+
+        var specialty = user.MedicalSpecialties.FirstOrDefault(ms => ms.Id == specialtyId);
+        if (specialty == null)
+            throw new Exception("Doctor does not have this specialty.");
+
+        user.MedicalSpecialties.Remove(specialty);
+        await _userManager.UpdateAsync(user);
     }
 }
