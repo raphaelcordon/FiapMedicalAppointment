@@ -1,50 +1,95 @@
-version: '3.8'
-services:
-  api:
-    image: raphaelcordon/fiapmedicalappointment:latest
-    environment:
-      ASPNETCORE_ENVIRONMENT: Production
-      JWT_KEY: ${JWT_KEY}
-      SQLSERVER_CONNECTIONSTRING: ${SQLSERVER_CONNECTIONSTRING}
-    depends_on:
-      - db
-    volumes:
-      - static_files:/static-files
-      - media_files:/media-files
-      - frontend_build:/app/wwwroot
-    networks:
-      - app-network
+name: CI/CD Pipeline
 
-  nginx:
-    image: nginx:1.25
-    ports:
-      - '8080:80'
-      - '443:443'
-    volumes:
-      - static_files:/static-files
-      - media_files:/media-files
-      - ./nginx:/etc/nginx/conf.d
-      - frontend_build:/frontend_build
-      - /etc/letsencrypt:/etc/letsencrypt:ro
-    networks:
-      - app-network
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
-  db:
-    image: mcr.microsoft.com/mssql/server:2019-latest
-    environment:
-      SA_PASSWORD: ${SA_PASSWORD}
-      ACCEPT_EULA: "Y"
-    volumes:
-      - sql_data:/var/opt/mssql
-    networks:
-      - app-network
+jobs:
+  build-and-push:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v2
 
-volumes:
-  sql_data:
-  static_files:
-  media_files:
-  frontend_build:
+      # Log in to Docker Hub
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-networks:
-  app-network:
-    driver: bridge
+      # Build and push Docker image
+      - name: Pull latest image
+        run: docker pull raphaelcordon/fiapmedicalappointment:latest || true
+      - name: Build the Docker image
+        run: docker build . --tag raphaelcordon/fiapmedicalappointment:${{ github.sha }} --cache-from raphaelcordon/fiapmedicalappointment:latest
+      - name: Push the Docker image
+        run: |
+          docker push raphaelcordon/fiapmedicalappointment:${{ github.sha }}
+          docker tag raphaelcordon/fiapmedicalappointment:${{ github.sha }} raphaelcordon/fiapmedicalappointment:latest
+          docker push raphaelcordon/fiapmedicalappointment:latest
+
+  test:
+    needs: build-and-push
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run tests
+        run: |
+          echo "Run your .NET tests here"
+          # Example: docker run --rm raphaelcordon/fiapmedicalappointment:${{ github.sha }} dotnet test
+
+  lint:
+    needs: test
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run linter
+        run: |
+          echo "Run your .NET format check here"
+          # Example: docker run --rm raphaelcordon/fiapmedicalappointment:${{ github.sha }} dotnet tool run dotnet-format -- --check
+
+  deploy:
+    needs: lint
+    runs-on: self-hosted
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up SSH Key
+        run: |
+          mkdir -p $HOME/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' > $HOME/.ssh/id_rsa
+          chmod 600 $HOME/.ssh/id_rsa
+          ssh-keyscan -H 134.209.242.61 >> $HOME/.ssh/known_hosts
+      - name: Copy configuration files to Droplet
+        run: |
+          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa docker-compose.deploy.yml raphael@134.209.242.61:/home/raphael/docker-compose.deploy.yml
+          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 'mkdir -p /home/raphael/nginx'
+          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa nginx/default.conf raphael@134.209.242.61:/home/raphael/nginx/default.conf
+      - name: Deploy to Digital Ocean
+        env:
+          SA_PASSWORD: ${{ secrets.SA_PASSWORD }}
+          CONNECTIONSTRINGS: ${{ secrets.CONNECTIONSTRINGS }}
+          JWT_KEY: ${{ secrets.JWT_KEY }}
+          SQLSERVER_CONNECTIONSTRING: ${{ secrets.SQLSERVER_CONNECTIONSTRING }}
+        run: |
+          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 "
+          export SA_PASSWORD='${{ secrets.SA_PASSWORD }}' &&
+          export CONNECTIONSTRINGS='${{ secrets.CONNECTIONSTRINGS }}' &&
+          export JWT_KEY='${{ secrets.JWT_KEY }}' &&
+          export SQLSERVER_CONNECTIONSTRING='${{ secrets.SQLSERVER_CONNECTIONSTRING }}' &&
+          docker pull raphaelcordon/fiapmedicalappointment:latest &&
+          docker-compose -f /home/raphael/docker-compose.deploy.yml down --remove-orphans &&
+          docker volume rm frontend_build || true &&
+          docker-compose -f /home/raphael/docker-compose.deploy.yml up -d
+          "
+      - name: Clean up Docker images
+        run: |
+          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 "
+          docker image prune -f &&
+          docker images -q --filter 'dangling=true' | xargs docker rmi -f || true &&
+          docker images -q --filter 'before=raphaelcordon/fiapmedicalappointment:latest' | xargs docker rmi -f || true
+          "
