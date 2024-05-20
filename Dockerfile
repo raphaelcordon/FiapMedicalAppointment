@@ -1,45 +1,34 @@
-# Stage 1: Build the backend
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS backend-build
+# Use the official ASP.NET Core runtime as a parent image
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+WORKDIR /app
+EXPOSE 80
+EXPOSE 443
+
+# Use the official ASP.NET Core build image
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
-
-# Copy csproj and restore as distinct layers
-COPY src/Domain/Domain.csproj ./Domain/
-COPY src/Infrastructure/Infrastructure.csproj ./Infrastructure/
-COPY src/Api/Api.csproj ./Api/
-RUN dotnet restore "Api/Api.csproj"
-
-# Copy everything else and build
-COPY src/Domain ./Domain/
-COPY src/Infrastructure ./Infrastructure/
-COPY src/Api ./Api/
-WORKDIR /src/Api
-
-# Build the project
+COPY ["src/Api/Api.csproj", "src/Api/"]
+COPY ["src/Infrastructure/Infrastructure.csproj", "src/Infrastructure/"]
+COPY ["src/Domain/Domain.csproj", "src/Domain/"]
+RUN dotnet restore "src/Api/Api.csproj"
+COPY . .
+WORKDIR "/src/src/Api"
 RUN dotnet build "Api.csproj" -c Release -o /app/build
 
-# Publish the project
-FROM backend-build AS backend-publish
+FROM build AS publish
 RUN dotnet publish "Api.csproj" -c Release -o /app/publish
 
-# Stage 2: Build the frontend
-FROM node:18-alpine AS frontend-build
-WORKDIR /frontend
-
-COPY src/Frontend/package.json ./package.json
-COPY src/Frontend/package-lock.json ./package-lock.json
-
-RUN npm install
-
-COPY src/Frontend ./
-
-RUN npm run build
-
-# Final stage: Combine backend and frontend
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+FROM base AS final
 WORKDIR /app
-COPY --from=backend-publish /app/publish .
-COPY --from=frontend-build /frontend/dist /app/wwwroot
-ENV ASPNETCORE_URLS=http://+:80
-ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
-EXPOSE 80
+COPY --from=publish /app/publish .
+
+# Set environment variables
+ARG ASPNETCORE_ENVIRONMENT
+ARG JWT_KEY
+ARG SQLSERVER_CONNECTIONSTRING
+
+ENV ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
+ENV JWT_KEY=${JWT_KEY}
+ENV SQLSERVER_CONNECTIONSTRING=${SQLSERVER_CONNECTIONSTRING}
+
 ENTRYPOINT ["dotnet", "Api.dll"]
