@@ -3,3 +3,9 @@ obj/
 /packages/
 riderModule.iml
 /_ReSharper.Caches/
+.DS_STORE
+static-files
+media-files
+*.idea
+node_modules
+docker-compose.yml
