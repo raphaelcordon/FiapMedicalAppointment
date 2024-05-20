@@ -14,23 +14,23 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      # Log in to Docker Hub
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
       - name: Log in to Docker Hub
         uses: docker/login-action@v1
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Build and push Docker image
-      - name: Pull latest image
-        run: docker pull raphaelcordon/fiapmedicalappointment:latest || true
-      - name: Build the Docker image
-        run: docker build . --tag raphaelcordon/fiapmedicalappointment:${{ github.sha }} --cache-from raphaelcordon/fiapmedicalappointment:latest
-      - name: Push the Docker image
-        run: |
-          docker push raphaelcordon/fiapmedicalappointment:${{ github.sha }}
-          docker tag raphaelcordon/fiapmedicalappointment:${{ github.sha }} raphaelcordon/fiapmedicalappointment:latest
-          docker push raphaelcordon/fiapmedicalappointment:latest
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: |
+            raphaelcordon/fiapmedicalappointment:latest
+            raphaelcordon/fiapmedicalappointment:${{ github.sha }}
 
   test:
     needs: build-and-push
@@ -58,17 +58,20 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v2
+
       - name: Set up SSH Key
         run: |
           mkdir -p $HOME/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' > $HOME/.ssh/id_rsa
           chmod 600 $HOME/.ssh/id_rsa
           ssh-keyscan -H 134.209.242.61 >> $HOME/.ssh/known_hosts
+
       - name: Copy configuration files to Droplet
         run: |
           scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa docker-compose.deploy.yml raphael@134.209.242.61:/home/raphael/docker-compose.deploy.yml
           ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 'mkdir -p /home/raphael/nginx'
           scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa nginx/default.conf raphael@134.209.242.61:/home/raphael/nginx/default.conf
+
       - name: Deploy to Digital Ocean
         env:
           SA_PASSWORD: ${{ secrets.SA_PASSWORD }}
@@ -83,9 +86,9 @@ jobs:
           export SQLSERVER_CONNECTIONSTRING='${{ secrets.SQLSERVER_CONNECTIONSTRING }}' &&
           docker pull raphaelcordon/fiapmedicalappointment:latest &&
           docker-compose -f /home/raphael/docker-compose.deploy.yml down --remove-orphans &&
-          docker volume rm frontend_build || true &&
           docker-compose -f /home/raphael/docker-compose.deploy.yml up -d
           "
+
       - name: Clean up Docker images
         run: |
           ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 "
