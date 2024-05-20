@@ -80,6 +80,12 @@ jobs:
           docker pull raphaelcordon/fiapmedicalappointment:latest &&
           docker-compose -f /home/raphael/docker-compose.deploy.yml down --remove-orphans &&
           docker volume rm frontend_build || true &&
-          docker-compose -f /home/raphael/docker-compose.deploy.yml up -d &&
-          docker image prune -f
+          docker-compose -f /home/raphael/docker-compose.deploy.yml up -d
+          "
+      - name: Clean up Docker images
+        run: |
+          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 "
+          docker image prune -f &&
+          docker images -q --filter 'dangling=true' | xargs docker rmi -f || true &&
+          docker images -q --filter 'before=raphaelcordon/fiapmedicalappointment:latest' | xargs docker rmi -f || true
           "
