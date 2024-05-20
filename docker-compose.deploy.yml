@@ -1,12 +1,10 @@
 version: '3.8'
 services:
   api:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: raphaelcordon/fiapmedicalappointment:latest
     environment:
       - JWT_KEY=${JWT_KEY}
-      - SQLSERVER_CONNECTIONSTRING=${SQLSERVER_CONNECTIONSTRING}
+      - ConnectionStrings__DefaultConnection=${SQLSERVER_CONNECTIONSTRING}
     depends_on:
       - db
     volumes:
