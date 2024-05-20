@@ -14,7 +14,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Configure Entity Framework Core with SQL Server
 builder.Services.AddDbContext<DatabaseContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("SqlServerConnectionString")));
+    options.UseSqlServer(
+        Environment.GetEnvironmentVariable("SQLSERVER_CONNECTIONSTRING") ?? 
+        builder.Configuration.GetConnectionString("SqlServerConnectionString")));
 
 // Configure Identity with the User entity
 builder.Services.AddIdentity<UserProfile, Role>(options =>
@@ -41,9 +43,9 @@ builder.Services.AddAuthentication(options =>
             ValidateAudience = false,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
+                Environment.GetEnvironmentVariable("JWT_KEY") ??
+                builder.Configuration["Jwt:Key"]))
         };
     });
 
