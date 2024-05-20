@@ -8,19 +8,24 @@ public class DatabaseContextFactory : IDesignTimeDbContextFactory<DatabaseContex
 {
     public DatabaseContext CreateDbContext(string[] args)
     {
-        // Assuming 'Project' is the root and 'Api' is at the same level as 'Infrastructure'
-        var projectRoot = Directory.GetCurrentDirectory(); // Gets 'Infrastructure'
+        var projectRoot = Directory.GetCurrentDirectory();
         var apiPath = Path.Combine(Directory.GetParent(projectRoot).FullName, "Api");
 
         IConfigurationRoot configuration = new ConfigurationBuilder()
             .SetBasePath(apiPath)
             .AddJsonFile("appsettings.json")
+            .AddEnvironmentVariables()
             .Build();
 
         var builder = new DbContextOptionsBuilder<DatabaseContext>();
-        var connectionString = configuration.GetConnectionString("SqlServerConnectionString");
+
+        // Check for environment variable first
+        var connectionString = Environment.GetEnvironmentVariable("SQLSERVER_CONNECTIONSTRING") 
+                               ?? configuration.GetConnectionString("SqlServerConnectionString");
+
         builder.UseSqlServer(connectionString);
 
         return new DatabaseContext(builder.Options);
+
     }
 }
