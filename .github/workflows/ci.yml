@@ -74,9 +74,9 @@ jobs:
           SA_PASSWORD: ${{ secrets.SA_PASSWORD }}
           CONNECTIONSTRINGS: ${{ secrets.CONNECTIONSTRINGS }}
         run: |
-          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 '
-          export SA_PASSWORD=${{ secrets.SA_PASSWORD }} &&
-          export CONNECTIONSTRINGS=${{ secrets.CONNECTIONSTRINGS }} &&
+          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 "
+          export SA_PASSWORD='${{ secrets.SA_PASSWORD }}' &&
+          export CONNECTIONSTRINGS='${{ secrets.CONNECTIONSTRINGS }}' &&
           docker pull raphaelcordon/fiapmedicalappointment:latest && 
           docker-compose -f /home/raphael/docker-compose.deploy.yml up -d
-          '
+          "
