@@ -17,32 +17,47 @@ builder.Configuration
     .SetBasePath(Directory.GetCurrentDirectory())
     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
-    .AddEnvironmentVariables();  // This line ensures environment variables are loaded
+    .AddEnvironmentVariables();
+
+// Get the connection string
+var connectionString = builder.Configuration.GetConnectionString("SqlServerConnectionString") ??
+                       Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
+
+if (string.IsNullOrEmpty(connectionString))
+{
+    throw new ArgumentException("Connection string is missing. Please set the connection string in appsettings or as an environment variable.");
+}
+
+Console.WriteLine(connectionString); // For debugging, ensure it's loading
 
 // Configure Entity Framework Core with SQL Server
-var connectionString = builder.Configuration.GetConnectionString("SqlServerConnectionString") ??
-                       builder.Configuration["ConnectionStrings__DefaultConnection"];
-
 builder.Services.AddDbContext<DatabaseContext>(options =>
     options.UseSqlServer(connectionString));
 
 // Configure Identity with the User entity
 builder.Services.AddIdentity<UserProfile, Role>(options =>
-    {
-        options.SignIn.RequireConfirmedAccount = false;
-        options.Password.RequireNonAlphanumeric = false;
-        options.Password.RequireDigit = true;
-        options.Password.RequiredLength = 5;
-    })
+{
+    options.SignIn.RequireConfirmedAccount = false;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireDigit = true;
+    options.Password.RequiredLength = 5;
+})
     .AddEntityFrameworkStores<DatabaseContext>()
     .AddDefaultTokenProviders();
 
+// Get JWT key from environment variable or configuration
+var jwtKey = builder.Configuration["Jwt:Key"] ?? Environment.GetEnvironmentVariable("JWT_KEY");
+if (string.IsNullOrEmpty(jwtKey))
+{
+    throw new ArgumentException("JWT key is missing. Please set the JWT key in appsettings or as an environment variable.");
+}
+
 // Configure JWT Bearer Authentication
 builder.Services.AddAuthentication(options =>
-    {
-        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    })
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
@@ -51,9 +66,7 @@ builder.Services.AddAuthentication(options =>
             ValidateAudience = false,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
-                Environment.GetEnvironmentVariable("JWT_KEY") ??
-                builder.Configuration["Jwt:Key"]))
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
         };
     });
 
@@ -113,12 +126,6 @@ if (app.Environment.IsDevelopment() || Environment.GetEnvironmentVariable("CI") 
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Medical Appointment v1"));
 }
 
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    await UserRolesCreation.CreateRoles(services);
-}
-
 app.UseCors("AllowSpecificOrigin");
 app.UseHttpsRedirection();
 app.UseStaticFiles();
@@ -128,4 +135,4 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-app.Run();
+app.Run("http://0.0.0.0:80");
