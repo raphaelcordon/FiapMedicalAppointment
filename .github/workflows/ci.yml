@@ -77,6 +77,9 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 "
           export SA_PASSWORD='${{ secrets.SA_PASSWORD }}' &&
           export CONNECTIONSTRINGS='${{ secrets.CONNECTIONSTRINGS }}' &&
-          docker pull raphaelcordon/fiapmedicalappointment:latest && 
-          docker-compose -f /home/raphael/docker-compose.deploy.yml up -d
+          docker pull raphaelcordon/fiapmedicalappointment:latest &&
+          docker-compose -f /home/raphael/docker-compose.deploy.yml down --remove-orphans &&
+          docker volume rm frontend_build || true &&
+          docker-compose -f /home/raphael/docker-compose.deploy.yml up -d &&
+          docker image prune -f
           "
