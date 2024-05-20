@@ -77,13 +77,13 @@ jobs:
           SA_PASSWORD: ${{ secrets.SA_PASSWORD }}
           CONNECTIONSTRINGS: ${{ secrets.CONNECTIONSTRINGS }}
           JWT_KEY: ${{ secrets.JWT_KEY }}
-          SQLSERVER_CONNECTIONSTRING: ${{ secrets.SQLSERVER_CONNECTIONSTRING }}
+          SQLSERVER_CONNECTIONSTRING: ${{ secrets.CONNECTIONSTRINGS }}
         run: |
           ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 "
           export SA_PASSWORD='${{ secrets.SA_PASSWORD }}' &&
           export CONNECTIONSTRINGS='${{ secrets.CONNECTIONSTRINGS }}' &&
           export JWT_KEY='${{ secrets.JWT_KEY }}' &&
-          export SQLSERVER_CONNECTIONSTRING='${{ secrets.SQLSERVER_CONNECTIONSTRING }}' &&
+          export SQLSERVER_CONNECTIONSTRING='${{ secrets.CONNECTIONSTRINGS }}' &&
           docker pull raphaelcordon/fiapmedicalappointment:latest &&
           docker-compose -f /home/raphael/docker-compose.deploy.yml down --remove-orphans &&
           docker-compose -f /home/raphael/docker-compose.deploy.yml up -d
