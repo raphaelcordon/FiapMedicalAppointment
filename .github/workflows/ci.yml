@@ -25,7 +25,7 @@ jobs:
       - name: Pull latest image
         run: docker pull raphaelcordon/fiapmedicalappointment:latest || true
       - name: Build the Docker image
-        run: docker build . --tag raphaelcordon/fiapmedicalappointment:${{ github.sha }} --cache-from raphaelcordon/fiapmedicalappointment:latest --target production
+        run: docker build . --tag raphaelcordon/fiapmedicalappointment:${{ github.sha }} --cache-from raphaelcordon/fiapmedicalappointment:latest
       - name: Push the Docker image
         run: |
           docker push raphaelcordon/fiapmedicalappointment:${{ github.sha }}
