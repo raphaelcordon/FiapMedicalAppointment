@@ -2,13 +2,13 @@ import AppointmentPatientList from "../../Components/AppointmentComponent/Appoin
 import ScheduleAppointmentComponent from "../../Components/AppointmentComponent/ScheduleAppointment.jsx";
 
 const AppointmentPatient = () => {
-    return (
-        <section className="">
-            <h1>Appointment Patient</h1>
-            <ScheduleAppointmentComponent />
-            <AppointmentPatientList />
-        </section>
-    );
+  return (
+    <section className="">
+      <h1>Appointment Patient</h1>
+      <ScheduleAppointmentComponent />
+      <AppointmentPatientList />
+    </section>
+  );
 };
 
 export default AppointmentPatient;

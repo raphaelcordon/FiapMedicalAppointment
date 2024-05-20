@@ -1,18 +1,26 @@
 import { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
-import { GetAppointmentsForPatient, UpdateAppointmentStatus, CancelAppointment } from "../../axios/appointment";
+import { useSelector, useDispatch } from "react-redux";
+import { GetAppointmentsForPatient, UpdateAppointmentStatus, CancelAppointment, GetAllAppointmentSpans } from "../../axios/appointment";
+import { deleteAppointment, storeAppointmentData, updateAppointment } from "../../Store/slices/appointmentSlice.js";
 
 const AppointmentPatientList = () => {
   const user = useSelector((state) => state.user.userData);
-  const [appointments, setAppointments] = useState([]);
+  const appointments = useSelector((state) => state.appointment.appointmentData);
+  const dispatch = useDispatch();
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [currentAppointment, setCurrentAppointment] = useState(null);
+  const [newAppointmentTime, setNewAppointmentTime] = useState("");
+  const [newSpan, setNewSpan] = useState("");
+  const [newStatus, setNewStatus] = useState("");
+  const [spans, setSpans] = useState([]);
 
   useEffect(() => {
     const fetchAppointments = async () => {
       try {
         const data = await GetAppointmentsForPatient(user.id);
-        setAppointments(data);
+        dispatch(storeAppointmentData(data));
       } catch (err) {
         setError(err.message);
       }
@@ -21,19 +29,50 @@ const AppointmentPatientList = () => {
     if (user && user.id) {
       fetchAppointments();
     }
-  }, [user]);
+  }, [user, dispatch]);
+
+  useEffect(() => {
+    const fetchSpans = async () => {
+      try {
+        const spansData = await GetAllAppointmentSpans();
+        spansData.sort((a, b) => a.duration - b.duration);
+        setSpans(spansData);
+        if (spansData.length > 0) {
+          setNewSpan(spansData[0].id); // Set default span
+        }
+      } catch (err) {
+        setError(err.message);
+      }
+    };
+
+    fetchSpans();
+  }, []);
 
   const pastAppointments = appointments.filter(appointment => new Date(appointment.appointmentTime) < new Date());
   const futureAppointments = appointments.filter(appointment => new Date(appointment.appointmentTime) >= new Date());
 
-  const handleUpdate = async (appointmentId, newStatus) => {
+  const handleUpdateClick = (appointment) => {
+  setIsEditing(true);
+  setCurrentAppointment(appointment);
+  setNewAppointmentTime(new Date(appointment.appointmentTime).toISOString().slice(0, 16));
+  setNewSpan(appointment.spanId || spans[0]?.id);
+  setNewStatus(appointment.status);
+};
+
+
+  const handleUpdate = async () => {
     try {
-      await UpdateAppointmentStatus(appointmentId, newStatus);
+      const updateData = {
+        newAppointmentTime,
+        newSpan,
+        newStatus
+      };
+      const updatedAppointment = await UpdateAppointmentStatus(currentAppointment.id, updateData);
+      dispatch(updateAppointment(updatedAppointment));
       setSuccess("Appointment updated successfully");
       setError("");
-      // Refresh appointments
-      const data = await GetAppointmentsForPatient(user.id);
-      setAppointments(data);
+      setIsEditing(false);
+      setCurrentAppointment(null);
     } catch (err) {
       setError(err.message);
       setSuccess("");
@@ -43,15 +82,18 @@ const AppointmentPatientList = () => {
   const handleDelete = async (appointmentId) => {
     try {
       await CancelAppointment(appointmentId);
+      dispatch(deleteAppointment(appointmentId));
       setSuccess("Appointment canceled successfully");
       setError("");
-      // Refresh appointments
-      const data = await GetAppointmentsForPatient(user.id);
-      setAppointments(data);
     } catch (err) {
       setError(err.message);
       setSuccess("");
     }
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setCurrentAppointment(null);
   };
 
   return (
@@ -67,7 +109,7 @@ const AppointmentPatientList = () => {
             </p>
             <div className="flex justify-end space-x-2 mt-2">
               <button
-                onClick={() => handleUpdate(appointment.id, "Reschedule")}
+                onClick={() => handleUpdateClick(appointment)}
                 className="btn btn-primary btn-sm"
               >
                 Update
@@ -98,6 +140,58 @@ const AppointmentPatientList = () => {
         ))
       ) : (
         <p>No past appointments.</p>
+      )}
+
+      {isEditing && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-1/2">
+            <h2 className="text-2xl font-bold mb-4">Update Appointment</h2>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">Appointment Time:</label>
+              <input
+                type="datetime-local"
+                value={newAppointmentTime}
+                onChange={(e) => setNewAppointmentTime(e.target.value)}
+                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">Duration:</label>
+              <select
+                value={newSpan}
+                onChange={(e) => setNewSpan(e.target.value)}
+                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+              >
+                {spans.map(span => (
+                  <option key={span.id} value={span.id}>{span.duration} minutes</option>
+                ))}
+              </select>
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">Status:</label>
+              <input
+                type="text"
+                value={newStatus}
+                onChange={(e) => setNewStatus(e.target.value)}
+                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+              />
+            </div>
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={handleUpdate}
+                className="btn btn-primary"
+              >
+                Save
+              </button>
+              <button
+                onClick={handleCancelEdit}
+                className="btn btn-secondary"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {error && <p className="text-error text-sm mt-2">{error}</p>}

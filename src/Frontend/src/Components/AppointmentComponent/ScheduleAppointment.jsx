@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { GetAllMedicalSpecialties } from "../../axios/medicalSpecialty";
-import { GetAllAppointmentSpans, ScheduleAppointment } from "../../axios/appointment";
-import { GetAllUsersByRole } from "../../axios/user";
+import { GetAllAppointmentSpans, ScheduleAppointment, UpdateAppointmentStatus, CancelAppointment } from "../../axios/appointment";
+import { addAppointment, updateAppointment, deleteAppointment, storeAppointmentData } from "../../Store/slices/appointmentSlice.js";
 
 const ScheduleAppointmentComponent = () => {
   const user = useSelector((state) => state.user.userData);
+  const dispatch = useDispatch();
   const [specialties, setSpecialties] = useState([]);
   const [spans, setSpans] = useState([]);
   const [doctors, setDoctors] = useState([]);
@@ -23,7 +24,11 @@ const ScheduleAppointmentComponent = () => {
         setSpecialties(specialtiesData);
 
         const spansData = await GetAllAppointmentSpans();
+        spansData.sort((a, b) => a.duration - b.duration); // Sort spans by duration
         setSpans(spansData);
+        if (spansData.length > 0) {
+          setSelectedSpan(spansData[0].id); // Set default selected span
+        }
       } catch (err) {
         setError(err.message);
       }
@@ -38,18 +43,14 @@ const ScheduleAppointmentComponent = () => {
         try {
           setDoctors([]);
           const doctorsData = await GetAllUsersByRole("Doctor");
-          console.log("Fetched doctors:", doctorsData);
-
           const selectedSpecialtyName = specialties.find(spec => spec.id === selectedSpecialty)?.specialty;
 
           const filteredDoctors = doctorsData.filter(doctor => {
-            console.log(`Doctor ${doctor.email}'s specialties:`, doctor.medicalSpecialties);
             return doctor.medicalSpecialties.includes(selectedSpecialtyName);
           });
 
-          console.log("Filtered doctors:", filteredDoctors);
           setDoctors(filteredDoctors);
-          setSelectedDoctor(""); // Clear selected doctor when specialty changes
+          setSelectedDoctor("");
         } catch (err) {
           setError(err.message);
         }
@@ -71,13 +72,20 @@ const ScheduleAppointmentComponent = () => {
         spanId: selectedSpan,
         specialtyId: selectedSpecialty
       };
-      await ScheduleAppointment(data);
+      const appointment = await ScheduleAppointment(data);
+      dispatch(addAppointment(appointment));
       setSuccess(true);
       setError("");
     } catch (err) {
       setError(err.message);
       setSuccess(false);
     }
+  };
+
+  const getMinDate = () => {
+    const date = new Date();
+    date.setDate(date.getDate() + 1);
+    return date.toISOString().slice(0, 16); // Format date as 'YYYY-MM-DDTHH:MM'
   };
 
   return (
@@ -105,6 +113,7 @@ const ScheduleAppointmentComponent = () => {
             onChange={(e) => setSelectedDoctor(e.target.value)}
             className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
             required
+            disabled={selectedSpecialty === ""}
           >
             <option value="">Select Doctor</option>
             {doctors.length > 0 ? (
@@ -122,6 +131,7 @@ const ScheduleAppointmentComponent = () => {
             type="datetime-local"
             value={appointmentTime}
             onChange={(e) => setAppointmentTime(e.target.value)}
+            min={getMinDate()}
             className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
             required
           />
@@ -140,7 +150,12 @@ const ScheduleAppointmentComponent = () => {
           </select>
         </div>
         <div className="flex justify-between">
-          <button type="submit" className="btn btn-primary">
+          <button type="submit" className="btn btn-primary" disabled={
+            selectedSpecialty === "" ||
+            selectedDoctor === "" ||
+            appointmentTime === "" ||
+            selectedSpan === ""
+          }>
             Schedule Appointment
           </button>
         </div>

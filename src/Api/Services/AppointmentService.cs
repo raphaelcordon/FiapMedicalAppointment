@@ -1,15 +1,13 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Api.Common;
-using AutoMapper;
 using Domain.Dtos;
 using Domain.Entities;
 using Domain.Interfaces;
 using Domain.Interfaces.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Api.Services
 {
@@ -120,18 +118,36 @@ namespace Api.Services
             }).ToList();
         }
 
-        public async Task<AppointmentDto> UpdateAppointmentStatus(Guid appointmentId, string status)
+        public async Task<AppointmentDto> UpdateAppointmentStatus(Guid appointmentId, UpdateAppointmentDto updateDto)
         {
             var appointment = await _appointmentRepository.FindAsync(appointmentId);
             if (appointment == null)
                 throw new Exception("Appointment not found.");
 
-            appointment.Status = status;
+            if (updateDto.NewAppointmentTime.HasValue)
+                appointment.AppointmentDateTime = updateDto.NewAppointmentTime.Value;
+
+            if (updateDto.NewSpan != Guid.Empty)
+            {
+                var span = await _spanRepository.FindAsync(updateDto.NewSpan);
+                if (span == null)
+                    throw new Exception("Invalid span.");
+                appointment.AppointmentSpanId = updateDto.NewSpan;
+            }
+
+            if (!string.IsNullOrEmpty(updateDto.NewStatus))
+                appointment.Status = updateDto.NewStatus;
+
             await _appointmentRepository.UpdateAsync(appointment);
             await _appointmentRepository.SaveChangesAsync();
 
             var doctor = await _userManager.FindByIdAsync(appointment.DoctorId.ToString());
+            if (doctor == null)
+                throw new Exception("Doctor not found.");
+
             var patient = await _userManager.FindByIdAsync(appointment.PatientId.ToString());
+            if (patient == null)
+                throw new Exception("Patient not found.");
 
             return new AppointmentDto
             {
@@ -144,6 +160,7 @@ namespace Api.Services
                 Status = appointment.Status
             };
         }
+        
 
         public async Task CancelAppointment(Guid appointmentId)
         {
