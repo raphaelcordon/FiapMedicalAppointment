@@ -5,7 +5,7 @@ services:
     environment:
       - Jwt__Key=${JWT_KEY}
       - ConnectionStrings__SqlServerConnectionString=${CONNECTIONSTRINGS}
-      - EmailService={EMAIL_SERVICE}
+      - EmailService=${EMAIL_SERVICE}
     depends_on:
       - db
     volumes:
@@ -18,13 +18,13 @@ services:
   nginx:
     image: nginx:1.25
     ports:
-      - '8080:80'
+      - '80:80'
       - '443:443'
     volumes:
       - static_files:/static-files
       - media_files:/media-files
       - ./nginx:/etc/nginx/conf.d
-      - frontend_build:/frontend_build
+      - frontend_build:/usr/share/nginx/html
       - /etc/letsencrypt:/etc/letsencrypt:ro
     networks:
       - app-network
