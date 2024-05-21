@@ -3,7 +3,7 @@ services:
   api:
     image: raphaelcordon/fiapmedicalappointment:latest
     environment:
-      - JWT_KEY=${JWT_KEY}
+      - Jwt__Key=${JWT_KEY}
       - ConnectionStrings__SqlServerConnectionString=${CONNECTIONSTRINGS}
     depends_on:
       - db
