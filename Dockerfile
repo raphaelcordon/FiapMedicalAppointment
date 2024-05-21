@@ -6,7 +6,7 @@ EXPOSE 443
 
 # Use the official ASP.NET Core build image
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-WORKDIR /src
+WORKDIR /.
 COPY ["src/Api/Api.csproj", "src/Api/"]
 COPY ["src/Infrastructure/Infrastructure.csproj", "src/Infrastructure/"]
 COPY ["src/Domain/Domain.csproj", "src/Domain/"]
