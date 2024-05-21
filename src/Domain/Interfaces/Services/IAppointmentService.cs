@@ -9,4 +9,5 @@ public interface IAppointmentService
     Task<IEnumerable<AppointmentDto>> GetAppointmentsForPatient(Guid patientId);
     Task<AppointmentDto> UpdateAppointmentStatus(Guid appointmentId, UpdateAppointmentDto updateDto);
     Task CancelAppointment(Guid appointmentId);
+    Task<IEnumerable<AppointmentDto>> GetAppointmentsByDateAsync(DateTime date);
 }

@@ -172,5 +172,34 @@ namespace Api.Services
             await _appointmentRepository.UpdateAsync(appointment);
             await _appointmentRepository.SaveChangesAsync();
         }
+        
+        public async Task<IEnumerable<AppointmentDto>> GetAppointmentsByDateAsync(DateTime date)
+        {
+            var appointments = await _appointmentRepository.FindByCondition(a => a.AppointmentDateTime.Date == date)
+                .Include(a => a.AppointmentSpan)
+                .Include(a => a.Specialty)
+                .ToListAsync();
+
+            var doctorIds = appointments.Select(a => a.DoctorId).Distinct();
+            var doctors = await _userManager.Users.Where(u => doctorIds.Contains(u.Id)).ToListAsync();
+            var patientIds = appointments.Select(a => a.PatientId).Distinct();
+            var patients = await _userManager.Users.Where(u => patientIds.Contains(u.Id)).ToListAsync();
+
+            return appointments.Select(a =>
+            {
+                var doctor = doctors.FirstOrDefault(d => d.Id == a.DoctorId);
+                var patient = patients.FirstOrDefault(p => p.Id == a.PatientId);
+                return new AppointmentDto
+                {
+                    Id = a.Id,
+                    DoctorName = doctor?.UserName,
+                    PatientName = patient?.UserName,
+                    AppointmentTime = a.AppointmentDateTime,
+                    DurationMinutes = a.AppointmentSpan.Duration,
+                    Specialty = a.Specialty?.Specialty,
+                    Status = a.Status
+                };
+            }).ToList();
+        }
     }
 }

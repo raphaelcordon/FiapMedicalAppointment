@@ -2,6 +2,7 @@ using Api.Services;
 using Domain.Entities;
 using Domain.Interfaces;
 using Domain.Interfaces.Services;
+using Infrastructure.BackgroundServices;
 using Infrastructure.Database.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -20,6 +21,8 @@ namespace Api.Common
             // Register services
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IMedicalSpecialtyService, MedicalSpecialtyService>();
+            services.AddHostedService<AppointmentReminderService>();
+            services.AddScoped<IEmailSender, EmailSender>();
             services.AddScoped<IAppointmentService, AppointmentService>();
             services.AddScoped<RoleManager<Role>>();
             services.AddScoped<IRoleStore<Role>, RoleStore<Role, DatabaseContext, Guid>>();
