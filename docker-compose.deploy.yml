@@ -4,7 +4,7 @@ services:
     image: raphaelcordon/fiapmedicalappointment:latest
     environment:
       - JWT_KEY=${JWT_KEY}
-      - ConnectionStrings__DefaultConnection=${CONNECTIONSTRINGS}
+      - ConnectionStrings__SqlServerConnectionString=${CONNECTIONSTRINGS}
     depends_on:
       - db
     volumes:
