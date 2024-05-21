@@ -7,7 +7,7 @@ services:
       target: final
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      ConnectionStrings__DefaultConnection: "Server=db,1433;Database=sub-database;User Id=sa;Password=someThingComplicated1234;TrustServerCertificate=true;"
+      ConnectionStrings__SqlServerConnectionString: "Server=db,1433;Database=sub-database;User Id=sa;Password=someThingComplicated1234;TrustServerCertificate=true;"
     ports:
       - '5002:80'
     depends_on:
