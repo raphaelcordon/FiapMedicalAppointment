@@ -5,6 +5,7 @@ services:
     environment:
       - Jwt__Key=${JWT_KEY}
       - ConnectionStrings__SqlServerConnectionString=${CONNECTIONSTRINGS}
+      - EmailService={EMAIL_SERVICE}
     depends_on:
       - db
     volumes:

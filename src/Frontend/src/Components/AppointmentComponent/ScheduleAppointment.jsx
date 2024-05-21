@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { GetAllMedicalSpecialties } from "../../axios/medicalSpecialty";
-import { GetAllAppointmentSpans, ScheduleAppointment, UpdateAppointmentStatus, CancelAppointment } from "../../axios/appointment";
-import { addAppointment, updateAppointment, deleteAppointment, storeAppointmentData } from "../../Store/slices/appointmentSlice.js";
+import { GetAllAppointmentSpans, ScheduleAppointment } from "../../axios/appointment";
+import { addAppointment } from "../../Store/slices/appointmentSlice.js";
+import {GetAllUsersByRole} from "../../axios/user.js";
 
 const ScheduleAppointmentComponent = () => {
   const user = useSelector((state) => state.user.userData);
