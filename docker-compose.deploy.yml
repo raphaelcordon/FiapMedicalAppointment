@@ -24,7 +24,7 @@ services:
       - static_files:/static-files
       - media_files:/media-files
       - ./nginx:/etc/nginx/conf.d
-      - frontend_build:/usr/share/nginx/html
+      - frontend_build:/frontend/dist
       - /etc/letsencrypt:/etc/letsencrypt:ro
     networks:
       - app-network
