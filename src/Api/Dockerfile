@@ -17,7 +17,22 @@ FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
 RUN dotnet publish "Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
+# Stage 2: Build the frontend
+FROM node:18-alpine AS frontend-build
+WORKDIR /frontend
+
+COPY src/Frontend/package.json ./package.json
+COPY src/Frontend/package-lock.json ./package-lock.json
+
+RUN npm install
+
+COPY src/Frontend ./
+
+RUN npm run build
+
 FROM base AS final
 WORKDIR /app
+COPY --from=backend-publish /app/publish .
+COPY --from=frontend-build /frontend/dist /app/wwwroot
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "Api.dll"]
