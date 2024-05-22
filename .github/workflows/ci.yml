@@ -44,13 +44,13 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore ./tests/Unit.Test/Unit.Test.csproj
 
       - name: Build the solution
-        run: dotnet build --no-restore
+        run: dotnet build ./tests/Unit.Test/Unit.Test.csproj --no-restore
 
       - name: Run tests
-        run: dotnet test --no-build --verbosity normal
+        run: dotnet test ./tests/Unit.Test/Unit.Test.csproj --no-build --verbosity normal
 
   lint:
     needs: test
