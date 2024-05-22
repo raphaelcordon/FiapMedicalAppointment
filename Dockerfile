@@ -1,10 +1,4 @@
-# Use the official ASP.NET Core runtime as a parent image
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-WORKDIR /app
-EXPOSE 80
-EXPOSE 443
-
-# Use the official ASP.NET Core build image
+# Stage 1: Build the backend
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /.
 COPY ["src/Api/Api.csproj", "src/Api/"]
@@ -18,6 +12,20 @@ RUN dotnet build "Api.csproj" -c Release -o /app/build
 FROM build AS publish
 RUN dotnet publish "Api.csproj" -c Release -o /app/publish
 
+# Stage 2: Build the frontend
+FROM node:18-alpine AS frontend-build
+WORKDIR /frontend
+
+COPY src/Frontend/package.json ./package.json
+COPY src/Frontend/package-lock.json ./package-lock.json
+
+RUN npm install
+
+COPY src/Frontend ./
+
+RUN npm run build
+
+# Stage 3: Final stage to assemble the app
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
