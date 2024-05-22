@@ -41,6 +41,9 @@ namespace Api.Services
                 throw new Exception("Invalid patient.");
 
             var span = await _spanRepository.FindAsync(scheduleDto.SpanId);
+            if (span == null)
+                throw new Exception("Invalid span.");
+
             var specialty = await _specialtyRepository.FindAsync(scheduleDto.SpecialtyId);
             if (specialty == null)
                 throw new Exception("Invalid specialty.");
@@ -69,6 +72,7 @@ namespace Api.Services
                 Status = appointment.Status
             };
         }
+
 
         public async Task<IEnumerable<AppointmentDto>> GetAppointmentsForDoctor(Guid doctorId)
         {
