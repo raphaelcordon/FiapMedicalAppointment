@@ -18,7 +18,7 @@ services:
   nginx:
     image: nginx:1.25
     ports:
-      - '80:80'
+      - '8080:80'
       - '443:443'
     volumes:
       - static_files:/static-files
