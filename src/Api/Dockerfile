@@ -31,7 +31,7 @@ WORKDIR /app
 EXPOSE 8080
 EXPOSE 8081
 
-COPY --from=publish /app/publish .
-COPY --from=frontend-build /frontend/dist /app/wwwroot
+#COPY --from=publish /app/publish .
+#COPY --from=frontend-build /frontend/dist /app/wwwroot
 
 ENTRYPOINT ["dotnet", "Api.dll"]
