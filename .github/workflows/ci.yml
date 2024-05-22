@@ -93,9 +93,9 @@ jobs:
           export CONNECTIONSTRINGS='${{ secrets.CONNECTIONSTRINGS }}' &&
           export JWT_KEY='${{ secrets.JWT_KEY }}' &&
           export EMAIL_SERVICE='${{ secrets.EMAIL_SERVICE }}' &&
-          docker pull raphaelcordon/fiapmedicalappointment:latest &&
           docker-compose -f /home/raphael/docker-compose.deploy.yml down --remove-orphans &&
           docker volume rm raphael_frontend_build || true &&
+          docker pull raphaelcordon/fiapmedicalappointment:latest &&
           docker-compose -f /home/raphael/docker-compose.deploy.yml up -d
           "
 

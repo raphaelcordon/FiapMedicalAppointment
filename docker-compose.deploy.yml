@@ -4,7 +4,7 @@ services:
     image: raphaelcordon/fiapmedicalappointment:latest
     environment:
       - Jwt__Key=${JWT_KEY}
-      - ConnectionStrings__SqlServerConnectionString=${CONNECTIONSTRINGS}
+      - ConnectionStrings__SqlServerConnectionString=Server=db,1433;Database=sub-database;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=true;
       - EmailService=${EMAIL_SERVICE}
     depends_on:
       - db
