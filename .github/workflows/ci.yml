@@ -37,10 +37,20 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build the solution
+        run: dotnet build --no-restore
+
       - name: Run tests
-        run: |
-          echo "Run your .NET tests here"
-          # Example: docker run --rm raphaelcordon/fiapmedicalappointment:${{ github.sha }} dotnet test
+        run: dotnet test --no-build --verbosity normal
 
   lint:
     needs: test
