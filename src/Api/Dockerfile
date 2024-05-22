@@ -1,9 +1,4 @@
-﻿FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-USER $APP_UID
-WORKDIR /app
-EXPOSE 8080
-EXPOSE 8081
-
+﻿# Stage 1: Build the backend
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
@@ -30,9 +25,13 @@ COPY src/Frontend ./
 
 RUN npm run build
 
-FROM base AS final
+# Stage 3: Final stage to assemble the app
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
-COPY --from=backend-publish /app/publish .
-COPY --from=frontend-build /frontend/dist /app/wwwroot
+EXPOSE 8080
+EXPOSE 8081
+
 COPY --from=publish /app/publish .
+COPY --from=frontend-build /frontend/dist /app/wwwroot
+
 ENTRYPOINT ["dotnet", "Api.dll"]
