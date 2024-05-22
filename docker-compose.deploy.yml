@@ -11,7 +11,7 @@ services:
     volumes:
       - static_files:/static-files
       - media_files:/media-files
-      - frontend_build:/app/wwwroot
+      - frontend_build:/frontend/dist
     networks:
       - app-network
 
@@ -24,7 +24,7 @@ services:
       - static_files:/static-files
       - media_files:/media-files
       - ./nginx:/etc/nginx/conf.d
-      - frontend_build:/app/wwwroot
+      - frontend_build:/frontend_build
       - /etc/letsencrypt:/etc/letsencrypt:ro
     networks:
       - app-network
