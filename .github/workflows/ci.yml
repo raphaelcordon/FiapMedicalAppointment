@@ -70,7 +70,7 @@ jobs:
         run: |
           scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa docker-compose.deploy.yml raphael@134.209.242.61:/home/raphael/docker-compose.deploy.yml
           ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 'mkdir -p /home/raphael/nginx'
-          scp -o StrictHostKeyChecking-no -i $HOME/.ssh/id_rsa nginx/default.conf raphael@134.209.242.61:/home/raphael/nginx/default.conf
+          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa nginx/default.conf raphael@134.209.242.61:/home/raphael/nginx/default.conf
 
       - name: Deploy to Digital Ocean
         env:
