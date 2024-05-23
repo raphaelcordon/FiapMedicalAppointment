@@ -52,6 +52,19 @@ jobs:
           echo "Run your .NET format check here"
           # Example: docker run --rm raphaelcordon/fiapmedicalappointment:${{ github.sha }} dotnet tool run dotnet-format -- --check
 
+  clean-up:
+    needs: deploy
+    runs-on: self-hosted
+    steps:
+      - name: Clean up Docker images and volumes
+        run: |
+          docker-compose -f /home/raphael/docker-compose.deploy.yml down --remove-orphans &&
+          docker volume rm raphael_frontend_build || true &&
+          docker-compose -f /home/raphael/docker-compose.deploy.yml up -d &&
+          docker system prune -f
+          docker volume prune -f
+          
+          
   deploy:
     needs: lint
     runs-on: self-hosted
@@ -84,18 +97,5 @@ jobs:
           export CONNECTIONSTRINGS='${{ secrets.CONNECTIONSTRINGS }}' &&
           export JWT_KEY='${{ secrets.JWT_KEY }}' &&
           export EMAIL_SERVICE='${{ secrets.EMAIL_SERVICE }}' &&
-          docker pull raphaelcordon/fiapmedicalappointment:latest &&
-          docker network create app-network || true &&
-          docker-compose -f /home/raphael/docker-compose.deploy.yml down --remove-orphans &&
-          docker volume rm raphael_frontend_build || true &&
-          docker-compose -f /home/raphael/docker-compose.deploy.yml up -d
+          docker pull raphaelcordon/fiapmedicalappointment:latest
           "
-
-  clean-up:
-    needs: deploy
-    runs-on: self-hosted
-    steps:
-      - name: Clean up Docker images and volumes
-        run: |
-          docker system prune -f
-          docker volume prune -f

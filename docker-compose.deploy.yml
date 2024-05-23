@@ -12,9 +12,15 @@ services:
       - static_files:/static-files
       - media_files:/media-files
       - frontend_build:/app/wwwroot
-    networks:
-      - app-network
 
+  db:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    environment:
+      - SA_PASSWORD=${SA_PASSWORD}
+      - ACCEPT_EULA=Y
+    volumes:
+      - sql_data:/var/opt/mssql
+  
   nginx:
     image: nginx:1.25
     ports:
@@ -24,20 +30,8 @@ services:
       - static_files:/static-files
       - media_files:/media-files
       - ./nginx:/etc/nginx/conf.d
-      - frontend_build:/usr/share/nginx/html
+      - frontend_build:/frontend_build
       - /etc/letsencrypt:/etc/letsencrypt:ro
-    networks:
-      - app-network
-
-  db:
-    image: mcr.microsoft.com/mssql/server:2019-latest
-    environment:
-      - SA_PASSWORD=${SA_PASSWORD}
-      - ACCEPT_EULA=Y
-    volumes:
-      - sql_data:/var/opt/mssql
-    networks:
-      - app-network
 
 volumes:
   sql_data:
@@ -45,6 +39,3 @@ volumes:
   media_files:
   frontend_build:
 
-networks:
-  app-network:
-    driver: bridge
