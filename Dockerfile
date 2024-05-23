@@ -13,18 +13,11 @@ FROM build AS publish
 RUN dotnet publish "Api.csproj" -c Release -o /publish
 
 # Stage 2: Build the frontend
-# Installing node.js
-RUN apt-get update
-RUN apt-get upgrade -y
-RUN apt-get install curl -y
-RUN curl https://deb.nodesource.com/setup_18.x | bash - && apt-get install -y nodejs
-
+FROM node:18-alpine AS frontend-build
 WORKDIR /frontend
 COPY src/Frontend/package.json /frontend/package.json
 COPY src/Frontend/package-lock.json /frontend/package-lock.json
 RUN npm install
-
-# Copying frontend files and building application
 COPY src/Frontend /frontend
 RUN npm run build
 
@@ -32,6 +25,7 @@ RUN npm run build
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 COPY --from=publish /publish .
+COPY --from=frontend-build /frontend/dist /app/wwwroot
 
 # Set environment variables
 ARG ASPNETCORE_ENVIRONMENT
