@@ -4,27 +4,27 @@ services:
     image: raphaelcordon/fiapmedicalappointment:latest
     environment:
       - Jwt__Key=${JWT_KEY}
-      - ConnectionStrings__SqlServerConnectionString=Server=db,1433;Database=sub-database;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=true;
+      - ConnectionStrings__SqlServerConnectionString=${CONNECTIONSTRINGS}
       - EmailService=${EMAIL_SERVICE}
     depends_on:
       - db
     volumes:
       - static_files:/static-files
       - media_files:/media-files
-      - frontend_build:/frontend/dist
+      - frontend_build:/app/wwwroot
     networks:
       - app-network
 
   nginx:
     image: nginx:1.25
     ports:
-      - '8080:80'
+      - '80:80'
       - '443:443'
     volumes:
       - static_files:/static-files
       - media_files:/media-files
       - ./nginx:/etc/nginx/conf.d
-      - frontend_build:/frontend_build
+      - frontend_build:/usr/share/nginx/html
       - /etc/letsencrypt:/etc/letsencrypt:ro
     networks:
       - app-network
