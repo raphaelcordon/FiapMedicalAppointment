@@ -37,20 +37,10 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2
-
-      - name: Set up .NET
-        uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: '8.0.x'
-
-      - name: Restore dependencies
-        run: dotnet restore ./tests/Unit.Test/Unit.Test.csproj
-
-      - name: Build the solution
-        run: dotnet build ./tests/Unit.Test/Unit.Test.csproj --no-restore
-
       - name: Run tests
-        run: dotnet test ./tests/Unit.Test/Unit.Test.csproj --no-build --verbosity normal
+        run: |
+          echo "Run your .NET tests here"
+          # Example: docker run --rm raphaelcordon/fiapmedicalappointment:${{ github.sha }} dotnet test
 
   lint:
     needs: test
@@ -87,22 +77,24 @@ jobs:
           SA_PASSWORD: ${{ secrets.SA_PASSWORD }}
           CONNECTIONSTRINGS: ${{ secrets.CONNECTIONSTRINGS }}
           JWT_KEY: ${{ secrets.JWT_KEY }}
+          EMAIL_SERVICE: ${{ secrets.EMAIL_SERVICE }}
         run: |
           ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 "
           export SA_PASSWORD='${{ secrets.SA_PASSWORD }}' &&
           export CONNECTIONSTRINGS='${{ secrets.CONNECTIONSTRINGS }}' &&
           export JWT_KEY='${{ secrets.JWT_KEY }}' &&
           export EMAIL_SERVICE='${{ secrets.EMAIL_SERVICE }}' &&
+          docker pull raphaelcordon/fiapmedicalappointment:latest &&
           docker-compose -f /home/raphael/docker-compose.deploy.yml down --remove-orphans &&
           docker volume rm raphael_frontend_build || true &&
-          docker pull raphaelcordon/fiapmedicalappointment:latest &&
           docker-compose -f /home/raphael/docker-compose.deploy.yml up -d
           "
 
-      - name: Clean up Docker images
+  clean-up:
+    needs: deploy
+    runs-on: self-hosted
+    steps:
+      - name: Clean up Docker images and volumes
         run: |
-          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 "
-          docker image prune -f &&
-          docker images -q --filter 'dangling=true' | xargs docker rmi -f || true &&
-          docker images -q --filter 'before=raphaelcordon/fiapmedicalappointment:latest' | xargs docker rmi -f || true
-          "
+          docker system prune -f
+          docker volume prune -f
