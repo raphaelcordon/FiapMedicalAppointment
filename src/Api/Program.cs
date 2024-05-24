@@ -1,34 +1,28 @@
 using System.Text;
 using Api.Common;
 using Domain.Entities;
-using Infrastructure.Database;
-using Infrastructure.Database.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Load configuration from appsettings.*.json files
 builder.Configuration
     .SetBasePath(Directory.GetCurrentDirectory())
     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
     .AddEnvironmentVariables();
 
-// Get the connection string
 var connectionString = builder.Configuration.GetConnectionString("SqlServerConnectionString") ??
-                       Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
+                       Environment.GetEnvironmentVariable("ConnectionStrings__SqlServerConnectionString");
 
 if (string.IsNullOrEmpty(connectionString))
 {
     throw new ArgumentException("Connection string is missing. Please set the connection string in appsettings or as an environment variable.");
 }
 
-// Entity Framework Core with SQL Server
 builder.Services.AddDbContext<DatabaseContext>(options =>
     options.UseSqlServer(connectionString, sqlServerOptions =>
         sqlServerOptions.EnableRetryOnFailure(
@@ -36,7 +30,6 @@ builder.Services.AddDbContext<DatabaseContext>(options =>
             maxRetryDelay: TimeSpan.FromSeconds(10),
             errorNumbersToAdd: null)));
 
-// Identity with the User entity
 builder.Services.AddIdentity<UserProfile, Role>(options =>
 {
     options.SignIn.RequireConfirmedAccount = false;
@@ -47,14 +40,12 @@ builder.Services.AddIdentity<UserProfile, Role>(options =>
     .AddEntityFrameworkStores<DatabaseContext>()
     .AddDefaultTokenProviders();
 
-// JWT key
-var jwtKey = builder.Configuration["Jwt:Key"] ?? Environment.GetEnvironmentVariable("JWT_KEY");
+var jwtKey = builder.Configuration["Jwt:Key"] ?? Environment.GetEnvironmentVariable("Jwt__Key");
 if (string.IsNullOrEmpty(jwtKey))
 {
     throw new ArgumentException("JWT key is missing. Please set the JWT key in appsettings or as an environment variable.");
 }
 
-// JWT Bearer Authentication
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -72,7 +63,6 @@ builder.Services.AddAuthentication(options =>
         };
     });
 
-// Swagger
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Medical Appointment", Version = "v1" });
