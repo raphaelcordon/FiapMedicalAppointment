@@ -6,7 +6,7 @@ const Home = () => {
                 alt="Medical Appointment Logo"
                 className="w-full max-w-lg mx-auto border-4 border-blue-500 rounded-lg"
             />
-            <h1 className="text-3xl font-bold mt-4">Medical Appointment System</h1>
+            <h1 className="text-3xl font-bold mt-4"><b>Medical Appointment System</b></h1>
 
             <div className="p-4 bg-gray-50 flex flex-col items-center w-3/4 lg:w-1/2 mx-auto">
                 <div className="text-left p-2 text-lg">
