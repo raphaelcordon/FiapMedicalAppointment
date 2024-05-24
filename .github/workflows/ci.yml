@@ -72,23 +72,22 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 'mkdir -p /home/raphael/nginx'
           scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa nginx/default.conf raphael@134.209.242.61:/home/raphael/nginx/default.conf
 
-      - name: Deploy to Digital Ocean
-        env:
-          SA_PASSWORD: ${{ secrets.SA_PASSWORD }}
-          CONNECTIONSTRINGS: ${{ secrets.CONNECTIONSTRINGS }}
-          JWT_KEY: ${{ secrets.JWT_KEY }}
-          EMAIL_SERVICE: ${{ secrets.EMAIL_SERVICE }}
+      - name: Create environment file on Droplet
         run: |
           ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 "
-          export SA_PASSWORD='${{ secrets.SA_PASSWORD }}' &&
-          export CONNECTIONSTRINGS='${{ secrets.CONNECTIONSTRINGS }}' &&
-          export JWT_KEY='${{ secrets.JWT_KEY }}' &&
-          export EMAIL_SERVICE='${{ secrets.EMAIL_SERVICE }}' &&
+          echo 'SA_PASSWORD=${{ secrets.SA_PASSWORD }}' > /home/raphael/.env &&
+          echo 'CONNECTIONSTRINGS=${{ secrets.CONNECTIONSTRINGS }}' >> /home/raphael/.env &&
+          echo 'JWT_KEY=${{ secrets.JWT_KEY }}' >> /home/raphael/.env &&
+          echo 'EMAIL_SERVICE=${{ secrets.EMAIL_SERVICE }}' >> /home/raphael/.env
+          "
+
+      - name: Deploy to Digital Ocean
+        run: |
+          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 "
           docker network create app-network || true &&
-          env | grep -E 'SA_PASSWORD|CONNECTIONSTRINGS|JWT_KEY|EMAIL_SERVICE' &&
-          docker-compose -f /home/raphael/docker-compose.deploy.yml down --remove-orphans &&
+          docker-compose --env-file /home/raphael/.env -f /home/raphael/docker-compose.deploy.yml down --remove-orphans &&
           docker volume rm raphael_frontend_build || true &&
-          docker-compose -f /home/raphael/docker-compose.deploy.yml up -d
+          docker-compose --env-file /home/raphael/.env -f /home/raphael/docker-compose.deploy.yml up -d
           "
 
   clean-up:
