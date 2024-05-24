@@ -28,13 +28,15 @@ if (string.IsNullOrEmpty(connectionString))
     throw new ArgumentException("Connection string is missing. Please set the connection string in appsettings or as an environment variable.");
 }
 
-Console.WriteLine(connectionString); // For debugging, ensure it's loading
-
-// Configure Entity Framework Core with SQL Server
+// Entity Framework Core with SQL Server
 builder.Services.AddDbContext<DatabaseContext>(options =>
-    options.UseSqlServer(connectionString));
+    options.UseSqlServer(connectionString, sqlServerOptions =>
+        sqlServerOptions.EnableRetryOnFailure(
+            maxRetryCount: 5,
+            maxRetryDelay: TimeSpan.FromSeconds(10),
+            errorNumbersToAdd: null)));
 
-// Configure Identity with the User entity
+// Identity with the User entity
 builder.Services.AddIdentity<UserProfile, Role>(options =>
 {
     options.SignIn.RequireConfirmedAccount = false;
@@ -45,14 +47,14 @@ builder.Services.AddIdentity<UserProfile, Role>(options =>
     .AddEntityFrameworkStores<DatabaseContext>()
     .AddDefaultTokenProviders();
 
-// Get JWT key from environment variable or configuration
+// JWT key
 var jwtKey = builder.Configuration["Jwt:Key"] ?? Environment.GetEnvironmentVariable("JWT_KEY");
 if (string.IsNullOrEmpty(jwtKey))
 {
     throw new ArgumentException("JWT key is missing. Please set the JWT key in appsettings or as an environment variable.");
 }
 
-// Configure JWT Bearer Authentication
+// JWT Bearer Authentication
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -70,7 +72,7 @@ builder.Services.AddAuthentication(options =>
         };
     });
 
-// Configure Swagger with JWT Authentication support
+// Swagger
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Medical Appointment", Version = "v1" });
