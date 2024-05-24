@@ -20,6 +20,11 @@ services:
       - ACCEPT_EULA=Y
     volumes:
       - sql_data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -U sa -P ${SA_PASSWORD} -Q 'SELECT 1'"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
 
   nginx:
     image: nginx:1.25
