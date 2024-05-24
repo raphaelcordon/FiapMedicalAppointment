@@ -30,7 +30,7 @@ deploy:
     - name: Initialize Database
       run: |
         ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 "
-        docker exec raphael-db-1 /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'someThingComplicated1234' -Q 'CREATE DATABASE IF NOT EXISTS [sub-database]'
+        docker exec raphael-db-1 /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'someThingComplicated1234' -Q 'CREATE DATABASE [sub-database]'
         "
 
     - name: Deploy to Digital Ocean
@@ -42,10 +42,14 @@ deploy:
         docker-compose --env-file /home/raphael/.env -f /home/raphael/docker-compose.deploy.yml up -d
         "
 
+    - name: Wait for DB to be ready
+      run: |
+        sleep 30  # Wait for the database to be fully up and running
+
     - name: Apply EF Migrations
       run: |
         ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 "
-        docker exec raphael-api-1 dotnet ef database update
+        docker exec $(docker ps -qf name=raphael-api-1) dotnet ef database update
         "
 
 clean-up:
