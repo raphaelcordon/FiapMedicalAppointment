@@ -9,17 +9,40 @@ on:
       - main
 
 jobs:
-  lint:
+  build-and-push:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2
-      - name: Run linter
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: |
+            raphaelcordon/fiapmedicalappointment:latest
+            raphaelcordon/fiapmedicalappointment:${{ github.sha }}
+
+  test:
+    needs: build-and-push
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run tests
         run: |
-          echo "Linting code..."
-          # Add your linting steps here
+          echo "Run your .NET tests here"
+          # Example: docker run --rm raphaelcordon/fiapmedicalappointment:${{ github.sha }} dotnet test
 
   deploy:
-    needs: [lint]
     runs-on: self-hosted
     if: github.ref == 'refs/heads/main'
     steps:
@@ -38,48 +61,33 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 'mkdir -p /home/raphael/nginx'
           scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa nginx/default.conf raphael@134.209.242.61:/home/raphael/nginx/default.conf
 
-      - name: Create environment file on Droplet
+      - name: Debug Environment Variables
         run: |
-          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 "
-          echo 'SA_PASSWORD=${{ secrets.SA_PASSWORD }}' > /home/raphael/.env &&
-          echo 'CONNECTIONSTRINGS=${{ secrets.CONNECTIONSTRINGS }}' >> /home/raphael/.env &&
-          echo 'JWT_KEY=${{ secrets.JWT_KEY }}' >> /home/raphael/.env &&
-          echo 'EMAIL_SERVICE=${{ secrets.EMAIL_SERVICE }}' >> /home/raphael/.env
-          "
-
-      - name: Initialize Database
-        run: |
-          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 "
-          docker exec raphael-db-1 /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P '${{ secrets.SA_PASSWORD }}' -Q 'CREATE DATABASE [sub-database]'
-          "
+          echo "SA_PASSWORD=${{ secrets.SA_PASSWORD }}"
+          echo "CONNECTIONSTRINGS=${{ secrets.CONNECTIONSTRINGS }}"
+          echo "JWT_KEY=${{ secrets.JWT_KEY }}"
+          echo "EMAIL_SERVICE=${{ secrets.EMAIL_SERVICE }}"
 
       - name: Deploy to Digital Ocean
+        env:
+          SA_PASSWORD: ${{ secrets.SA_PASSWORD }}
+          CONNECTIONSTRINGS: ${{ secrets.CONNECTIONSTRINGS }}
+          JWT_KEY: ${{ secrets.JWT_KEY }}
+          EMAIL_SERVICE: ${{ secrets.EMAIL_SERVICE }}
         run: |
           ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 "
+          export SA_PASSWORD='${{ secrets.SA_PASSWORD }}' &&
+          export CONNECTIONSTRINGS='${{ secrets.CONNECTIONSTRINGS }}' &&
+          export JWT_KEY='${{ secrets.JWT_KEY }}' &&
+          export EMAIL_SERVICE='${{ secrets.EMAIL_SERVICE }}' &&
           docker network create app-network || true &&
-          docker-compose --env-file /home/raphael/.env -f /home/raphael/docker-compose.deploy.yml down --remove-orphans &&
+          docker-compose -f /home/raphael/docker-compose.deploy.yml down --remove-orphans &&
           docker volume rm raphael_frontend_build || true &&
-          docker-compose --env-file /home/raphael/.env -f /home/raphael/docker-compose.deploy.yml up -d
+          docker-compose -f /home/raphael/docker-compose.deploy.yml up -d
           "
 
-      - name: Wait for DB to be ready
-        run: |
-          sleep 30  # Wait for the database to be fully up and running
-
-      - name: Apply EF Migrations
-        run: |
-          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 "
-          API_CONTAINER_ID=\$(docker ps -qf name=raphael-api-1)
-          if [ -n \"\$API_CONTAINER_ID\" ]; then
-            docker exec \$API_CONTAINER_ID dotnet ef database update
-          else
-            echo 'API container is not running.'
-            exit 1
-          fi
-          "
-  
-  
   clean-up:
+    needs: deploy
     runs-on: self-hosted
     steps:
       - name: Clean up Docker images and volumes
