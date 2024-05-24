@@ -1,106 +1,58 @@
-name: CI/CD Pipeline
+deploy:
+  needs: lint
+  runs-on: self-hosted
+  if: github.ref == 'refs/heads/main'
+  steps:
+    - uses: actions/checkout@v2
 
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+    - name: Set up SSH Key
+      run: |
+        mkdir -p $HOME/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' > $HOME/.ssh/id_rsa
+        chmod 600 $HOME/.ssh/id_rsa
+        ssh-keyscan -H 134.209.242.61 >> $HOME/.ssh/known_hosts
 
-jobs:
-  build-and-push:
-    runs-on: self-hosted
-    steps:
-      - uses: actions/checkout@v2
+    - name: Copy configuration files to Droplet
+      run: |
+        scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa docker-compose.deploy.yml raphael@134.209.242.61:/home/raphael/docker-compose.deploy.yml
+        ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 'mkdir -p /home/raphael/nginx'
+        scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa nginx/default.conf raphael@134.209.242.61:/home/raphael/nginx/default.conf
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
+    - name: Create environment file on Droplet
+      run: |
+        ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 "
+        echo 'SA_PASSWORD=${{ secrets.SA_PASSWORD }}' > /home/raphael/.env &&
+        echo 'CONNECTIONSTRINGS=${{ secrets.CONNECTIONSTRINGS }}' >> /home/raphael/.env &&
+        echo 'JWT_KEY=${{ secrets.JWT_KEY }}' >> /home/raphael/.env &&
+        echo 'EMAIL_SERVICE=${{ secrets.EMAIL_SERVICE }}' >> /home/raphael/.env
+        "
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v1
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+    - name: Initialize Database
+      run: |
+        ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 "
+        docker exec raphael-db-1 /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'someThingComplicated1234' -Q 'CREATE DATABASE IF NOT EXISTS [sub-database]'
+        "
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          push: true
-          tags: |
-            raphaelcordon/fiapmedicalappointment:latest
-            raphaelcordon/fiapmedicalappointment:${{ github.sha }}
+    - name: Deploy to Digital Ocean
+      run: |
+        ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 "
+        docker network create app-network || true &&
+        docker-compose --env-file /home/raphael/.env -f /home/raphael/docker-compose.deploy.yml down --remove-orphans &&
+        docker volume rm raphael_frontend_build || true &&
+        docker-compose --env-file /home/raphael/.env -f /home/raphael/docker-compose.deploy.yml up -d
+        "
 
-  test:
-    needs: build-and-push
-    runs-on: self-hosted
-    steps:
-      - uses: actions/checkout@v2
-      - name: Run tests
-        run: |
-          echo "Run your .NET tests here"
-          # Example: docker run --rm raphaelcordon/fiapmedicalappointment:${{ github.sha }} dotnet test
+    - name: Apply EF Migrations
+      run: |
+        ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 "
+        docker exec raphael-api-1 dotnet ef database update
+        "
 
-  lint:
-    needs: test
-    runs-on: self-hosted
-    steps:
-      - uses: actions/checkout@v2
-      - name: Run linter
-        run: |
-          echo "Run your .NET format check here"
-          # Example: docker run --rm raphaelcordon/fiapmedicalappointment:${{ github.sha }} dotnet tool run dotnet-format -- --check
-
-  deploy:
-    needs: lint
-    runs-on: self-hosted
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Set up SSH Key
-        run: |
-          mkdir -p $HOME/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' > $HOME/.ssh/id_rsa
-          chmod 600 $HOME/.ssh/id_rsa
-          ssh-keyscan -H 134.209.242.61 >> $HOME/.ssh/known_hosts
-
-      - name: Copy configuration files to Droplet
-        run: |
-          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa docker-compose.deploy.yml raphael@134.209.242.61:/home/raphael/docker-compose.deploy.yml
-          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 'mkdir -p /home/raphael/nginx'
-          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa nginx/default.conf raphael@134.209.242.61:/home/raphael/nginx/default.conf
-
-      - name: Create environment file on Droplet
-        run: |
-          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 "
-          echo 'SA_PASSWORD=${{ secrets.SA_PASSWORD }}' > /home/raphael/.env &&
-          echo 'CONNECTIONSTRINGS=${{ secrets.CONNECTIONSTRINGS }}' >> /home/raphael/.env &&
-          echo 'JWT_KEY=${{ secrets.JWT_KEY }}' >> /home/raphael/.env &&
-          echo 'EMAIL_SERVICE=${{ secrets.EMAIL_SERVICE }}' >> /home/raphael/.env
-          "
-
-      - name: Initialize Database
-        run: |
-          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 "
-          docker exec raphael-db-1 /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'someThingComplicated1234' -Q 'CREATE DATABASE IF NOT EXISTS [sub-database]'
-          "
-
-      - name: Deploy to Digital Ocean
-        run: |
-          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 "
-          docker network create app-network || true &&
-          docker-compose --env-file /home/raphael/.env -f /home/raphael/docker-compose.deploy.yml down --remove-orphans &&
-          docker volume rm raphael_frontend_build || true &&
-          docker-compose --env-file /home/raphael/.env -f /home/raphael/docker-compose.deploy.yml up -d
-          "
-
-  clean-up:
-    needs: deploy
-    runs-on: self-hosted
-    steps:
-      - name: Clean up Docker images and volumes
-        run: |
-          docker system prune -f
-          docker volume prune -f
+clean-up:
+  needs: deploy
+  runs-on: self-hosted
+  steps:
+    - name: Clean up Docker images and volumes
+      run: |
+        docker system prune -f
+        docker volume prune -f
