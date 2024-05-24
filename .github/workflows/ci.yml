@@ -81,6 +81,12 @@ jobs:
           echo 'EMAIL_SERVICE=${{ secrets.EMAIL_SERVICE }}' >> /home/raphael/.env
           "
 
+      - name: Initialize Database
+        run: |
+          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 "
+          docker exec raphael-db-1 /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'someThingComplicated1234' -Q 'CREATE DATABASE IF NOT EXISTS [sub-database]'
+          "
+
       - name: Deploy to Digital Ocean
         run: |
           ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 "
