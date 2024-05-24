@@ -72,13 +72,6 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 'mkdir -p /home/raphael/nginx'
           scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa nginx/default.conf raphael@134.209.242.61:/home/raphael/nginx/default.conf
 
-      - name: Debug Environment Variables
-        run: |
-          echo "SA_PASSWORD=${{ secrets.SA_PASSWORD }}"
-          echo "CONNECTIONSTRINGS=${{ secrets.CONNECTIONSTRINGS }}"
-          echo "JWT_KEY=${{ secrets.JWT_KEY }}"
-          echo "EMAIL_SERVICE=${{ secrets.EMAIL_SERVICE }}"
-
       - name: Deploy to Digital Ocean
         env:
           SA_PASSWORD: ${{ secrets.SA_PASSWORD }}
@@ -92,6 +85,7 @@ jobs:
           export JWT_KEY='${{ secrets.JWT_KEY }}' &&
           export EMAIL_SERVICE='${{ secrets.EMAIL_SERVICE }}' &&
           docker network create app-network || true &&
+          env | grep -E 'SA_PASSWORD|CONNECTIONSTRINGS|JWT_KEY|EMAIL_SERVICE' &&
           docker-compose -f /home/raphael/docker-compose.deploy.yml down --remove-orphans &&
           docker volume rm raphael_frontend_build || true &&
           docker-compose -f /home/raphael/docker-compose.deploy.yml up -d
