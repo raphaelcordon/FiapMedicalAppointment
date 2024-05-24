@@ -69,9 +69,16 @@ jobs:
       - name: Apply EF Migrations
         run: |
           ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 "
-          docker exec $(docker ps -qf name=raphael-api-1) dotnet ef database update
+          API_CONTAINER_ID=\$(docker ps -qf name=raphael-api-1)
+          if [ -n \"\$API_CONTAINER_ID\" ]; then
+            docker exec \$API_CONTAINER_ID dotnet ef database update
+          else
+            echo 'API container is not running.'
+            exit 1
+          fi
           "
-
+  
+  
   clean-up:
     runs-on: self-hosted
     steps:
