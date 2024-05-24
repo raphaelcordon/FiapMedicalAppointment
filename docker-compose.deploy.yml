@@ -1,10 +1,18 @@
 version: '3.8'
 services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    environment:
+      - SA_PASSWORD="someThingComplicated1234"
+      - ACCEPT_EULA=Y
+    volumes:
+      - sql_data:/var/opt/mssql
+        
   api:
     image: raphaelcordon/fiapmedicalappointment:latest
     environment:
       - Jwt__Key=${JWT_KEY}
-      - ConnectionStrings__SqlServerConnectionString=${CONNECTIONSTRINGS}
+      - ConnectionStrings__SqlServerConnectionString="Server=db,1433;Database=sub-database;User Id=sa;Password=someThingComplicated1234;TrustServerCertificate=true;"
       - EmailService=${EMAIL_SERVICE}
     depends_on:
       - db
@@ -13,13 +21,6 @@ services:
       - media_files:/media-files
       - frontend_build:/frontend_build
 
-  db:
-    image: mcr.microsoft.com/mssql/server:2019-latest
-    environment:
-      - SA_PASSWORD=${SA_PASSWORD}
-      - ACCEPT_EULA=Y
-    volumes:
-      - sql_data:/var/opt/mssql
 
   nginx:
     image: nginx:1.25
