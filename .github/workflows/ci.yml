@@ -1,62 +1,70 @@
-deploy:
-  needs: lint
-  runs-on: self-hosted
-  if: github.ref == 'refs/heads/main'
-  steps:
-    - uses: actions/checkout@v2
+name: CI/CD Pipeline
 
-    - name: Set up SSH Key
-      run: |
-        mkdir -p $HOME/.ssh
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' > $HOME/.ssh/id_rsa
-        chmod 600 $HOME/.ssh/id_rsa
-        ssh-keyscan -H 134.209.242.61 >> $HOME/.ssh/known_hosts
+on:
+  push:
+    branches:
+      - main
 
-    - name: Copy configuration files to Droplet
-      run: |
-        scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa docker-compose.deploy.yml raphael@134.209.242.61:/home/raphael/docker-compose.deploy.yml
-        ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 'mkdir -p /home/raphael/nginx'
-        scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa nginx/default.conf raphael@134.209.242.61:/home/raphael/nginx/default.conf
+jobs:
+  deploy:
+    needs: lint
+    runs-on: self-hosted
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v2
 
-    - name: Create environment file on Droplet
-      run: |
-        ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 "
-        echo 'SA_PASSWORD=${{ secrets.SA_PASSWORD }}' > /home/raphael/.env &&
-        echo 'CONNECTIONSTRINGS=${{ secrets.CONNECTIONSTRINGS }}' >> /home/raphael/.env &&
-        echo 'JWT_KEY=${{ secrets.JWT_KEY }}' >> /home/raphael/.env &&
-        echo 'EMAIL_SERVICE=${{ secrets.EMAIL_SERVICE }}' >> /home/raphael/.env
-        "
+      - name: Set up SSH Key
+        run: |
+          mkdir -p $HOME/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' > $HOME/.ssh/id_rsa
+          chmod 600 $HOME/.ssh/id_rsa
+          ssh-keyscan -H 134.209.242.61 >> $HOME/.ssh/known_hosts
 
-    - name: Initialize Database
-      run: |
-        ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 "
-        docker exec raphael-db-1 /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'someThingComplicated1234' -Q 'CREATE DATABASE [sub-database]'
-        "
+      - name: Copy configuration files to Droplet
+        run: |
+          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa docker-compose.deploy.yml raphael@134.209.242.61:/home/raphael/docker-compose.deploy.yml
+          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 'mkdir -p /home/raphael/nginx'
+          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa nginx/default.conf raphael@134.209.242.61:/home/raphael/nginx/default.conf
 
-    - name: Deploy to Digital Ocean
-      run: |
-        ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 "
-        docker network create app-network || true &&
-        docker-compose --env-file /home/raphael/.env -f /home/raphael/docker-compose.deploy.yml down --remove-orphans &&
-        docker volume rm raphael_frontend_build || true &&
-        docker-compose --env-file /home/raphael/.env -f /home/raphael/docker-compose.deploy.yml up -d
-        "
+      - name: Create environment file on Droplet
+        run: |
+          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 "
+          echo 'SA_PASSWORD=${{ secrets.SA_PASSWORD }}' > /home/raphael/.env &&
+          echo 'CONNECTIONSTRINGS=${{ secrets.CONNECTIONSTRINGS }}' >> /home/raphael/.env &&
+          echo 'JWT_KEY=${{ secrets.JWT_KEY }}' >> /home/raphael/.env &&
+          echo 'EMAIL_SERVICE=${{ secrets.EMAIL_SERVICE }}' >> /home/raphael/.env
+          "
 
-    - name: Wait for DB to be ready
-      run: |
-        sleep 30  # Wait for the database to be fully up and running
+      - name: Initialize Database
+        run: |
+          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 "
+          docker exec raphael-db-1 /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'someThingComplicated1234' -Q 'CREATE DATABASE [sub-database]'
+          "
 
-    - name: Apply EF Migrations
-      run: |
-        ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 "
-        docker exec $(docker ps -qf name=raphael-api-1) dotnet ef database update
-        "
+      - name: Deploy to Digital Ocean
+        run: |
+          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 "
+          docker network create app-network || true &&
+          docker-compose --env-file /home/raphael/.env -f /home/raphael/docker-compose.deploy.yml down --remove-orphans &&
+          docker volume rm raphael_frontend_build || true &&
+          docker-compose --env-file /home/raphael/.env -f /home/raphael/docker-compose.deploy.yml up -d
+          "
 
-clean-up:
-  needs: deploy
-  runs-on: self-hosted
-  steps:
-    - name: Clean up Docker images and volumes
-      run: |
-        docker system prune -f
-        docker volume prune -f
+      - name: Wait for DB to be ready
+        run: |
+          sleep 30  # Wait for the database to be fully up and running
+
+      - name: Apply EF Migrations
+        run: |
+          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 "
+          docker exec $(docker ps -qf name=raphael-api-1) dotnet ef database update
+          "
+
+  clean-up:
+    needs: deploy
+    runs-on: self-hosted
+    steps:
+      - name: Clean up Docker images and volumes
+        run: |
+          docker system prune -f
+          docker volume prune -f
