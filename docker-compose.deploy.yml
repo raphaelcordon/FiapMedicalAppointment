@@ -12,6 +12,8 @@ services:
       - static_files:/static-files
       - media_files:/media-files
       - frontend_build:/frontend_build
+    command: >
+      sh -c "dotnet ef database update && dotnet Api.dll"
 
   db:
     image: mcr.microsoft.com/mssql/server:2019-latest
