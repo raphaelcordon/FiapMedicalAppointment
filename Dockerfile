@@ -1,12 +1,12 @@
 # Stage 1: Build the backend
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-WORKDIR /.
+WORKDIR /app
 COPY ["src/Api/Api.csproj", "src/Api/"]
 COPY ["src/Infrastructure/Infrastructure.csproj", "src/Infrastructure/"]
 COPY ["src/Domain/Domain.csproj", "src/Domain/"]
 RUN dotnet restore "src/Api/Api.csproj"
 COPY . .
-WORKDIR /src/Api
+WORKDIR /app/src/Api
 RUN dotnet build "Api.csproj" -c Release -o /build
 
 FROM build AS publish
