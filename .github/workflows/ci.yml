@@ -4,10 +4,22 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
+  lint:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run linter
+        run: |
+          echo "Linting code..."
+          # Add your linting steps here
+
   deploy:
-    needs: lint
+    needs: [lint]
     runs-on: self-hosted
     if: github.ref == 'refs/heads/main'
     steps:
@@ -38,7 +50,7 @@ jobs:
       - name: Initialize Database
         run: |
           ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 "
-          docker exec raphael-db-1 /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'someThingComplicated1234' -Q 'CREATE DATABASE [sub-database]'
+          docker exec raphael-db-1 /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P '${{ secrets.SA_PASSWORD }}' -Q 'CREATE DATABASE [sub-database]'
           "
 
       - name: Deploy to Digital Ocean
@@ -61,7 +73,6 @@ jobs:
           "
 
   clean-up:
-    needs: deploy
     runs-on: self-hosted
     steps:
       - name: Clean up Docker images and volumes
