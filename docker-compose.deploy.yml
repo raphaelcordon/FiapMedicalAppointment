@@ -13,7 +13,9 @@ services:
       - media_files:/media-files
       - frontend_build:/frontend_build
     command: >
-      sh -c "dotnet ef database update && dotnet Api.dll"
+      sh -c "dotnet ef database update --project Infrastructure && dotnet Api.dll"
+    networks:
+      - app-network
 
   db:
     image: mcr.microsoft.com/mssql/server:2019-latest
@@ -22,6 +24,8 @@ services:
       - ACCEPT_EULA=Y
     volumes:
       - sql_data:/var/opt/mssql
+    networks:
+      - app-network
 
   nginx:
     image: nginx:1.25
@@ -34,9 +38,15 @@ services:
       - ./nginx:/etc/nginx/conf.d
       - frontend_build:/frontend_build
       - /etc/letsencrypt:/etc/letsencrypt:ro
+    networks:
+      - app-network
 
 volumes:
   sql_data:
   static_files:
   media_files:
   frontend_build:
+    
+networks:
+  app-network:
+    driver: bridge
