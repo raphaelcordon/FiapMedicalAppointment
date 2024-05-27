@@ -1,6 +1,7 @@
 using System.Text;
 using Api.Common;
 using Domain.Entities;
+using Infrastructure.Database;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -111,7 +112,7 @@ builder.Services.AddApplication();
 
 var app = builder.Build();
 
-// Apply pending migrations
+// Apply pending migrations and create roles
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -119,6 +120,9 @@ using (var scope = app.Services.CreateScope())
     {
         var context = services.GetRequiredService<DatabaseContext>();
         context.Database.Migrate();
+        
+        // Ensure roles are created
+        await UserRolesCreation.CreateRoles(services);
     }
     catch (Exception ex)
     {
