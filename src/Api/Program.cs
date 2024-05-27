@@ -111,6 +111,22 @@ builder.Services.AddApplication();
 
 var app = builder.Build();
 
+// Apply pending migrations
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<DatabaseContext>();
+        context.Database.Migrate();
+    }
+    catch (Exception ex)
+    {
+        // Log the error or handle it as needed
+        Console.WriteLine($"An error occurred while migrating the database: {ex.Message}");
+    }
+}
+
 if (app.Environment.IsDevelopment() || Environment.GetEnvironmentVariable("CI") != "true")
 {
     app.UseDeveloperExceptionPage();
