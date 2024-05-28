@@ -196,8 +196,9 @@ namespace Api.Services
                 return new AppointmentDto
                 {
                     Id = a.Id,
-                    DoctorName = doctor?.UserName,
-                    PatientName = patient?.UserName,
+                    DoctorName = doctor?.Email,
+                    PatientName = patient?.Email,
+                    PatientEmail = patient?.Email,
                     AppointmentTime = a.AppointmentDateTime,
                     DurationMinutes = a.AppointmentSpan.Duration,
                     Specialty = a.Specialty?.Specialty,

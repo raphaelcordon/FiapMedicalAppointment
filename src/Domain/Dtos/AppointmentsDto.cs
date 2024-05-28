@@ -14,6 +14,7 @@ namespace Domain.Dtos
         public Guid Id { get; set; }
         public string DoctorName { get; set; }
         public string PatientName { get; set; }
+        public string PatientEmail { get; set; }
         public DateTime AppointmentTime { get; set; }
         public int DurationMinutes { get; set; }
         public string Specialty { get; set; }
