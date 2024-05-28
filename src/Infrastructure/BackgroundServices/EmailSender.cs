@@ -4,47 +4,56 @@ using Domain.Dtos;
 using Domain.Interfaces;
 using Microsoft.Extensions.Configuration;
 
-namespace Infrastructure.BackgroundServices;
-
-public class EmailSender : IEmailSender
+namespace Infrastructure.BackgroundServices
 {
-    private readonly IConfiguration _configuration;
-
-    public EmailSender(IConfiguration configuration)
+    public class EmailSender : IEmailSender
     {
-        _configuration = configuration;
-    }
+        private readonly IConfiguration _configuration;
 
-    public void AppointmentEmailSender(AppointmentDto data)
-    {
-        try
+        public EmailSender(IConfiguration configuration)
         {
-            var mailString = _configuration.GetSection("EmailService")["MailString"];
-            var mailPass = _configuration.GetSection("EmailService")["PassString"];
+            _configuration = configuration;
+        }
 
-            var message = new MailMessage();
-            message.From = new MailAddress(mailString!);
-            message.Subject = $"Medical appointment {data.AppointmentTime}";
-            message.To.Add(new MailAddress(data.PatientName));
-            message.Body = $"<html><body>" +
+        public void AppointmentEmailSender(AppointmentDto data)
+        {
+            try
+            {
+                var mailString = _configuration.GetSection("EmailService")["MailString"];
+                var mailPass = _configuration.GetSection("EmailService")["PassString"];
+
+                if (string.IsNullOrEmpty(data.PatientEmail))
+                {
+                    throw new ArgumentNullException(nameof(data.PatientEmail), "Patient email cannot be null or empty.");
+                }
+
+                var message = new MailMessage
+                {
+                    From = new MailAddress(mailString!),
+                    Subject = $"Medical appointment {data.AppointmentTime}",
+                    Body = $"<html><body>" +
                            $"<p>Please remember you have an appointment soon.</p>" +
                            $"<p>Dr. {data.DoctorName} is the doctor who will see you.</p>" +
                            $"<p>The appointment is for the following specialty: <b>{data.Specialty}</b>.</p>" +
-                           $"{data.PatientName}</body></html>";
-            message.IsBodyHtml = true;
+                           $"</body></html>",
+                    IsBodyHtml = true
+                };
 
-            var smtpClient = new SmtpClient("smtp.gmail.com")
+                message.To.Add(new MailAddress(data.PatientEmail));
+
+                var smtpClient = new SmtpClient("smtp.gmail.com")
+                {
+                    Port = 587,
+                    Credentials = new NetworkCredential(mailString, mailPass),
+                    EnableSsl = true
+                };
+
+                smtpClient.Send(message);
+            }
+            catch (SmtpException ex)
             {
-                Port = 587,
-                Credentials = new NetworkCredential(mailString, mailPass),
-                EnableSsl = true,
-            };
-            smtpClient.Send(message);
-        }
-        catch (SmtpException ex)
-        {
-            throw new ApplicationException
-                ("SmtpException has occured: " + ex.Message);
+                throw new ApplicationException("SmtpException has occurred: " + ex.Message);
+            }
         }
     }
 }
