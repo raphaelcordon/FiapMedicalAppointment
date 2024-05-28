@@ -73,13 +73,15 @@ jobs:
           SA_PASSWORD: ${{ secrets.SA_PASSWORD }}
           CONNECTIONSTRINGS: ${{ secrets.CONNECTIONSTRINGS }}
           JWT_KEY: ${{ secrets.JWT_KEY }}
-          EMAIL_SERVICE: ${{ secrets.EMAIL_SERVICE }}
+          EMAIL_SERVICE_MAIL: ${{ secrets.EMAIL_SERVICE_MAIL }}
+          EMAIL_SERVICE_PASS: ${{ secrets.EMAIL_SERVICE_PASS }}
         run: |
           ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 "
           export SA_PASSWORD='${{ secrets.SA_PASSWORD }}' &&
           export CONNECTIONSTRINGS='${{ secrets.CONNECTIONSTRINGS }}' &&
           export JWT_KEY='${{ secrets.JWT_KEY }}' &&
-          export EMAIL_SERVICE='${{ secrets.EMAIL_SERVICE }}' &&
+          export EMAIL_SERVICE_MAIL='${{ secrets.EMAIL_SERVICE_MAIL }}' &&
+          export EMAIL_SERVICE_PASS='${{ secrets.EMAIL_SERVICE_PASS }}' &&
           docker network create app-network || true &&
           docker-compose -f /home/raphael/docker-compose.deploy.yml down --remove-orphans &&
           docker volume rm raphael_frontend_build || true &&
