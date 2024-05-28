@@ -5,7 +5,8 @@ services:
     environment:
       - Jwt__Key=${JWT_KEY}
       - ConnectionStrings__SqlServerConnectionString=${CONNECTIONSTRINGS}
-      - EmailService=${EMAIL_SERVICE}
+      - EmailService__MailString=${EMAIL_SERVICE_MAIL}
+      - EmailService__PassString=${EMAIL_SERVICE_PASS}
     depends_on:
       - db
     volumes:
@@ -13,10 +14,9 @@ services:
       - media_files:/media-files
       - frontend_build:/frontend_build
     command: >
-      sh -c "dotnet ef database update --project Infrastructure && dotnet Api.dll"
-    networks:
-      - app-network
-
+      sh -c "dotnet ef database update && dotnet Api.dll"
+    ports:
+      - "5002:80"
   db:
     image: mcr.microsoft.com/mssql/server:2019-latest
     environment:
@@ -24,9 +24,6 @@ services:
       - ACCEPT_EULA=Y
     volumes:
       - sql_data:/var/opt/mssql
-    networks:
-      - app-network
-
   nginx:
     image: nginx:1.25
     ports:
@@ -38,15 +35,8 @@ services:
       - ./nginx:/etc/nginx/conf.d
       - frontend_build:/frontend_build
       - /etc/letsencrypt:/etc/letsencrypt:ro
-    networks:
-      - app-network
-
 volumes:
   sql_data:
   static_files:
   media_files:
   frontend_build:
-    
-networks:
-  app-network:
-    driver: bridge
