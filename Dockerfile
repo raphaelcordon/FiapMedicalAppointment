@@ -4,7 +4,7 @@ WORKDIR /app
 COPY ./src/Frontend/package*.json ./
 RUN npm install
 COPY ./src/Frontend .
-RUN npm run build
+RUN npm run build  # Ensure this command outputs files to /app/build
 
 # Stage 2: Publish the backend
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS publish
