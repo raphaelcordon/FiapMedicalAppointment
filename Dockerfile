@@ -23,6 +23,6 @@ RUN dotnet ef database update --project Infrastructure
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-COPY --from=frontend-build /app/dist /frontend_build
+COPY --from=frontend-build /app/dist /frontend_build  # Correct the path to /app/dist
 
 ENTRYPOINT ["dotnet", "Api.dll"]
