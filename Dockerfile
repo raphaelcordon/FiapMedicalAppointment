@@ -22,19 +22,6 @@ RUN dotnet ef database update --project Infrastructure
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-COPY --from=frontend-build /app/dist /frontend_build
-
-# Set environment variables
-ARG ASPNETCORE_ENVIRONMENT
-ARG JWT_KEY
-ARG SQLSERVER_CONNECTIONSTRING
-ARG EMAIL_SERVICE_MAIL
-ARG EMAIL_SERVICE_PASS
-
-ENV ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
-ENV JWT_KEY=${JWT_KEY}
-ENV SQLSERVER_CONNECTIONSTRING=${SQLSERVER_CONNECTIONSTRING}
-ENV EMAIL_SERVICE_MAIL=${EMAIL_SERVICE_MAIL}
-ENV EMAIL_SERVICE_PASS=${EMAIL_SERVICE_PASS}
+COPY --from=frontend-build /app/build /frontend_build
 
 ENTRYPOINT ["dotnet", "Api.dll"]
