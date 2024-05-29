@@ -31,7 +31,6 @@ services:
       - "8080:80"
       - "443:443"
     volumes:
-      - frontend_build:/frontend_build
       - ./nginx:/etc/nginx/conf.d
       - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
