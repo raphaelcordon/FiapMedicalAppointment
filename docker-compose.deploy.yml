@@ -10,10 +10,6 @@ services:
       - EmailService__PassString=${EMAIL_SERVICE_PASS}
     depends_on:
       - db
-    volumes:
-      - static_files:/static-files
-      - media_files:/media-files
-      - frontend_build:/frontend/dist
     networks:
       - app-network
 

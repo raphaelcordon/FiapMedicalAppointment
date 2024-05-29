@@ -11,8 +11,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		docker-compose.yml = docker-compose.yml
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MedicalAppointment", "tests\MedicalAppointment\MedicalAppointment.csproj", "{840C521B-BA70-4255-93CB-4C4AB554BF8A}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Unit.Test", "tests\Unit.Test\Unit.Test.csproj", "{FA88604E-EF63-426A-B72D-C6D712E830E4}"
 EndProject
 Global
@@ -33,10 +31,6 @@ Global
 		{19841982-ABAC-4BA0-903C-0C50EA5F807F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{19841982-ABAC-4BA0-903C-0C50EA5F807F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{19841982-ABAC-4BA0-903C-0C50EA5F807F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{840C521B-BA70-4255-93CB-4C4AB554BF8A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{840C521B-BA70-4255-93CB-4C4AB554BF8A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{840C521B-BA70-4255-93CB-4C4AB554BF8A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{840C521B-BA70-4255-93CB-4C4AB554BF8A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{FA88604E-EF63-426A-B72D-C6D712E830E4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{FA88604E-EF63-426A-B72D-C6D712E830E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FA88604E-EF63-426A-B72D-C6D712E830E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
