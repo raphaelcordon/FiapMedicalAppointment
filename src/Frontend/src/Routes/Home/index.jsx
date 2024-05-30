@@ -13,7 +13,7 @@ const Home = () => {
                     <p className="mb-6">
                         This is <b>Raphael Torres Cordon</b>&apos;s course completion project<br/>
                         From the Postgraduate course: .NET Systems Architecture with Azure<br/>
-                        By FIAP - Faculty of Informatics and Administration Paulista
+                        By FIAP - Faculty of Informatics and Administration Paulista.
                     </p>
 
                     <p className="">

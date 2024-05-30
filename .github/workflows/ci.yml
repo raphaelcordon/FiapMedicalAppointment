@@ -78,6 +78,8 @@ jobs:
           docker network create app-network || true &&
           docker-compose -f /home/raphael/docker-compose.deploy.yml down --remove-orphans &&
           docker volume rm raphael_frontend_build || true &&
+          docker rmi raphaelcordon/fiapmedicalappointment  || true &&
+          docker rmi nginx  || true &&
           docker-compose -f /home/raphael/docker-compose.deploy.yml up -d
           "
 
