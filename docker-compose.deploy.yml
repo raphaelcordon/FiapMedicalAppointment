@@ -11,7 +11,7 @@ services:
     depends_on:
       - db
     volumes:
-      - frontend_build:/app/frontend_build
+      - frontend_build:/frontend/dist
     networks:
       - app-network
 
