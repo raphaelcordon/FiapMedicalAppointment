@@ -27,8 +27,8 @@ namespace Infrastructure.BackgroundServices
             while (!stoppingToken.IsCancellationRequested)
             {
                 await SendAppointmentRemindersAsync();
-                await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
-                // await Task.Delay(TimeSpan.FromHours(24), stoppingToken); // Run once a day
+                // await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
+                await Task.Delay(TimeSpan.FromHours(24), stoppingToken); // Run once a day
             }
         }
 
