@@ -61,19 +61,6 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa raphael@134.209.242.61 'mkdir -p /home/raphael/nginx'
           scp -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa nginx/default.conf raphael@134.209.242.61:/home/raphael/nginx/default.conf
 
-      - name: Debug Environment Variables
-        run: |
-          echo "SA_PASSWORD=${{ secrets.SA_PASSWORD }}"
-          echo "CONNECTIONSTRINGS=${{ secrets.CONNECTIONSTRINGS }}"
-          echo "JWT_KEY=${{ secrets.JWT_KEY }}"
-          echo "EMAIL_SERVICE_MAIL=${{ secrets.EMAIL_SERVICE_MAIL }}"
-          echo "EMAIL_SERVICE_PASS=${{ secrets.EMAIL_SERVICE_PASS }}"
-          echo "SA_PASSWORD=${{ secrets.SA_PASSWORD }}****"
-          echo "CONNECTIONSTRINGS=${{ secrets.CONNECTIONSTRINGS }}****"
-          echo "JWT_KEY=${{ secrets.JWT_KEY }}****"
-          echo "EMAIL_SERVICE_MAIL=${{ secrets.EMAIL_SERVICE_MAI }}****"
-          echo "EMAIL_SERVICE_PASS=${{ secrets.EMAIL_SERVICE_PASS }}****"
-
       - name: Deploy to Digital Ocean
         env:
           SA_PASSWORD: ${{ secrets.SA_PASSWORD }}
