@@ -68,11 +68,11 @@ jobs:
           echo "JWT_KEY=${{ secrets.JWT_KEY }}"
           echo "EMAIL_SERVICE_MAIL=${{ secrets.EMAIL_SERVICE_MAIL }}"
           echo "EMAIL_SERVICE_PASS=${{ secrets.EMAIL_SERVICE_PASS }}"
-          echo "SA_PASSWORD=${{ secrets.SA_PASSWORD:0:4 }}****"
-          echo "CONNECTIONSTRINGS=${{ secrets.CONNECTIONSTRINGS:0:4 }}****"
-          echo "JWT_KEY=${{ secrets.JWT_KEY:0:4 }}****"
-          echo "EMAIL_SERVICE_MAIL=${{ secrets.EMAIL_SERVICE_MAIL:0:4 }}****"
-          echo "EMAIL_SERVICE_PASS=${{ secrets.EMAIL_SERVICE_PASS:0:4 }}****"
+          echo "SA_PASSWORD=${{ secrets.SA_PASSWORD }}****"
+          echo "CONNECTIONSTRINGS=${{ secrets.CONNECTIONSTRINGS }}****"
+          echo "JWT_KEY=${{ secrets.JWT_KEY }}****"
+          echo "EMAIL_SERVICE_MAIL=${{ secrets.EMAIL_SERVICE_MAI }}****"
+          echo "EMAIL_SERVICE_PASS=${{ secrets.EMAIL_SERVICE_PASS }}****"
 
       - name: Deploy to Digital Ocean
         env:
