@@ -19,7 +19,7 @@ const Home = () => {
                     <p className="">
                         Esse é o projeto de conclusão de curso de <b>Raphael Torres Cordon</b><br/>
                         Do curso de Pós Tech: Arquitetura de Sistemas .NET com Azure<br/>
-                        Pela FIAP - Faculdade de Informática e Administração Paulista
+                        Pela FIAP - Faculdade de Informática e Administração Paulista.
                     </p>
                 </div>
             </div>
