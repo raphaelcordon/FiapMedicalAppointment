@@ -33,6 +33,7 @@ services:
     volumes:
       - ./nginx:/etc/nginx/conf.d
       - /etc/letsencrypt:/etc/letsencrypt:ro
+      - frontend_build:/frontend_build
     depends_on:
       - api
     networks:
